@@ -3,833 +3,1112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Finance | 投资行情监控仪表板</title>
+    <title>投资监控 Dashboard | 杠铃策略分析平台</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-bg: #0a0f1a;
+            --card-bg: rgba(20, 28, 48, 0.85);
+            --accent-blue: #00c4ff;
+            --accent-purple: #A589FF;
+            --accent-green: #2affd6;
+            --text-light: #f0f4f8;
+            --text-gray: #a0aec0;
+            --border-color: rgba(255, 255, 255, 0.12);
+            --transition-speed: 0.4s;
+            --border-radius: 16px;
+            --shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+            --shadow-hover: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        :root {
-            --primary: #1a2a4a;
-            --secondary: #2a3d66;
-            --accent: #00c4ff;
-            --positive: #00d09c;
-            --negative: #ff4d7d;
-            --text-light: #f0f4f8;
-            --text-gray: #a0aec0;
-            --card-bg: rgba(26, 42, 74, 0.8);
+            font-family: 'Noto Sans SC', sans-serif;
         }
 
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background-color: var(--primary-bg);
+            background-image: radial-gradient(circle at 25% 20%, rgba(0, 196, 255, 0.08) 0%, transparent 55%),
+                              radial-gradient(circle at 75% 80%, rgba(165, 137, 255, 0.08) 0%, transparent 55%);
             color: var(--text-light);
-            min-height: 100vh;
             overflow-x: hidden;
-            position: relative;
+            min-height: 100vh;
+            line-height: 1.6;
         }
 
-        body::before {
-            content: "";
-            position: absolute;
+        .header-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 400px;
+            background: radial-gradient(ellipse at top, rgba(10, 15, 26, 0.4) 0%, transparent 70%);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        #particle-canvas {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: 
-                radial-gradient(circle at 10% 20%, rgba(42, 61, 102, 0.3) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(0, 196, 255, 0.2) 0%, transparent 20%);
-            z-index: -1;
+            z-index: 1;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
         }
 
-        /* Header Styles */
         header {
-            padding: 20px 0;
-            border-bottom: 1px solid rgba(42, 61, 102, 0.6);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(15, 23, 42, 0.9);
-        }
-
-        .header-content {
+            width: 100%;
+            max-width: 1600px;
+            padding: 25px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            animation: fadeInDown 1s ease-out;
         }
 
         .logo {
             display: flex;
             align-items: center;
             gap: 15px;
+            text-decoration: none;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
         }
 
         .logo-icon {
-            background: var(--accent);
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
+            background: linear-gradient(145deg, var(--accent-blue), var(--accent-green));
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 22px;
+            box-shadow: 0 5px 15px rgba(0, 196, 255, 0.3);
         }
 
         .logo-text {
-            font-size: 24px;
-            font-weight: 700;
-            background: linear-gradient(90deg, var(--accent), #4dabf7);
+            font-size: 26px;
+            font-weight: 800;
+            background: linear-gradient(to right, var(--text-light), #b3e0ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 30px;
-        }
-
-        .nav-links a {
-            color: var(--text-light);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .nav-links a:hover {
-            color: var(--accent);
-        }
-
-        .nav-links a.active {
-            color: var(--accent);
-        }
-
-        .nav-links a.active::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: var(--accent);
-            border-radius: 2px;
         }
 
         .user-actions {
             display: flex;
-            gap: 20px;
-            align-items: center;
+            gap: 15px;
         }
 
-        .btn {
-            padding: 10px 22px;
-            border-radius: 8px;
+        .btn-auth {
+            padding: 12px 28px;
+            border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            border: none;
-            font-size: 14px;
+            font-size: 15px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn-login {
+            border: 2px solid var(--accent-blue);
             background: transparent;
             color: var(--text-light);
-            border: 1px solid var(--accent);
         }
 
         .btn-login:hover {
             background: rgba(0, 196, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 196, 255, 0.5);
         }
 
-        .btn-dashboard {
-            background: var(--accent);
-            color: var(--primary);
-        }
-
-        .btn-dashboard:hover {
-            background: #00b0e6;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 196, 255, 0.3);
-        }
-
-        /* Hero Section */
         .hero {
-            padding: 80px 0 60px;
             text-align: center;
-            max-width: 800px;
+            padding: 120px 0 60px;
+            animation: fadeInUp 1s ease-out 0.2s;
+            animation-fill-mode: forwards;
+            opacity: 0;
+            max-width: 900px;
             margin: 0 auto;
         }
 
         .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            line-height: 1.2;
-            background: linear-gradient(90deg, var(--text-light), #b3e0ff);
+            font-size: 4rem;
+            margin-bottom: 25px;
+            line-height: 1.15;
+            background: linear-gradient(to right, var(--text-light), #b3e0ff, var(--accent-green));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            letter-spacing: -0.5px;
         }
 
         .hero p {
-            font-size: 1.2rem;
+            font-size: 1.35rem;
             color: var(--text-gray);
-            margin-bottom: 40px;
-            line-height: 1.6;
+            line-height: 1.8;
+            margin: 0 auto 30px;
+            font-weight: 400;
         }
 
-        .hero-btns {
+        .section-title {
+            text-align: center;
+            font-size: 1.8rem;
+            margin: 60px 0 40px;
+            background: linear-gradient(to right, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(to right, var(--accent-blue), var(--accent-purple));
+            border-radius: 2px;
+        }
+
+        .barbell-container {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin-top: 30px;
+            align-items: flex-start;
+            gap: 40px;
+            width: 100%;
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 30px 0;
+            animation: fadeInUp 1s ease-out 0.5s;
+            animation-fill-mode: forwards;
+            opacity: 0;
         }
 
-        .btn-primary {
-            background: linear-gradient(90deg, var(--accent), #4dabf7);
-            color: white;
-            padding: 14px 32px;
-            font-size: 16px;
-            box-shadow: 0 4px 20px rgba(0, 196, 255, 0.4);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 25px rgba(0, 196, 255, 0.5);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            color: var(--text-light);
-            padding: 14px 32px;
-            font-size: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Dashboard Preview */
-        .dashboard-preview {
-            background: var(--card-bg);
-            border-radius: 20px;
-            overflow: hidden;
+        .barbell-bar {
+            position: relative;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, var(--accent-blue), transparent 40%, transparent 60%, var(--accent-purple));
+            border-radius: 4px;
             margin: 50px auto;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            max-width: 1200px;
-            position: relative;
+            max-width: 700px;
+            box-shadow: 0 0 15px rgba(0, 196, 255, 0.3), 0 0 15px rgba(165, 137, 255, 0.3);
         }
 
-        .preview-header {
+        .barbell-bar::before {
+            content: '';
+            position: absolute;
+            top: -25px;
+            left: 0;
+            width: 30px;
+            height: 30px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            box-shadow: 0 0 25px var(--accent-blue);
+            animation: pulse 3s infinite ease-in-out;
+        }
+
+        .barbell-bar::after {
+            content: '';
+            position: absolute;
+            top: -25px;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            background: var(--accent-purple);
+            border-radius: 50%;
+            box-shadow: 0 0 25px var(--accent-purple);
+            animation: pulse 3s 0.5s infinite ease-in-out;
+        }
+
+        .barbell-side {
+            flex: 1;
             display: flex;
-            justify-content: space-between;
-            padding: 20px 30px;
-            background: rgba(15, 23, 42, 0.7);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            flex-direction: column;
+            gap: 25px;
         }
 
-        .preview-title {
+        .side-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .side-header .icon {
+            font-size: 3.2rem;
+            margin-bottom: 15px;
+            display: inline-block;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .side-header:hover .icon {
+            transform: scale(1.1) translateY(-3px);
+        }
+        
+        .side-header .beta-icon { 
+            color: var(--accent-blue);
+            text-shadow: 0 0 15px rgba(0, 196, 255, 0.5);
+        }
+        .side-header .alpha-icon { 
+            color: var(--accent-purple);
+            text-shadow: 0 0 15px rgba(165, 137, 255, 0.5);
+        }
+
+        .side-header h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .side-header p {
+            font-size: 1.1rem;
+            color: var(--text-gray);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            transition: transform var(--transition-speed) ease, 
+                        box-shadow var(--transition-speed) ease,
+                        border-color var(--transition-speed) ease;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transition: transform 0.7s ease;
+            transform: skewX(-25deg);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(0, 196, 255, 0.25);
+        }
+
+        .feature-card:hover::before {
+            transform: skewX(-25deg) translateX(350%);
+        }
+
+        .feature-card-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 600;
-            color: var(--accent);
+            gap: 18px;
+            margin-bottom: 18px;
         }
 
-        .preview-controls {
-            display: flex;
-            gap: 15px;
-        }
-
-        .preview-controls span {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .preview-red {
-            background: var(--negative);
-        }
-
-        .preview-yellow {
-            background: #ffcc00;
-        }
-
-        .preview-green {
-            background: var(--positive);
-        }
-
-        .preview-content {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            padding: 30px;
-            gap: 30px;
-        }
-
-        .chart-container {
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .chart-title {
-            font-weight: 600;
-            font-size: 18px;
-        }
-
-        .chart-actions {
-            display: flex;
-            gap: 15px;
-            color: var(--text-gray);
-        }
-
-        .chart-actions i {
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .chart-actions i:hover {
-            color: var(--accent);
-        }
-
-        .chart-placeholder {
-            height: 300px;
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            margin-top: 10px;
-            position: relative;
-            overflow: hidden;
+            font-size: 20px;
+            flex-shrink: 0;
+            transition: transform var(--transition-speed) ease;
+        }
+        
+        .feature-card:hover .feature-icon {
+            transform: scale(1.15) rotate(5deg);
+        }
+        
+        .beta-icon-bg { 
+            background: rgba(0, 196, 255, 0.15);
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.2), 
+                        0 5px 15px rgba(0, 196, 255, 0.3);
+            color: var(--accent-blue);
+        }
+        .alpha-icon-bg { 
+            background: rgba(165, 137, 255, 0.15);
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.2), 
+                        0 5px 15px rgba(165, 137, 255, 0.3);
+            color: var(--accent-purple);
         }
 
-        .chart-placeholder::before {
-            content: "";
+        .feature-card h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .feature-card p {
+            color: var(--text-gray);
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+        /* 图表容器样式 */
+        .chart-container {
+            height: 150px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .chart {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            padding: 0 5px;
+        }
+
+        .bar {
+            flex: 1;
+            margin: 0 2px;
+            position: relative;
+            border-radius: 4px 4px 0 0;
+            animation: grow 1.5s ease-out forwards;
+            transform-origin: bottom;
+        }
+
+        .beta-side .bar {
+            background: linear-gradient(to top, var(--accent-blue), rgba(0, 196, 255, 0.3));
+        }
+
+        .alpha-side .bar {
+            background: linear-gradient(to top, var(--accent-purple), rgba(165, 137, 255, 0.3));
+        }
+
+        .line-chart {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .beta-side .line-chart {
+            stroke: var(--accent-blue);
+        }
+
+        .alpha-side .line-chart {
+            stroke: var(--accent-purple);
+        }
+
+        /* 新增图表样式 */
+        .radar-chart {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+        }
+
+        .radar-grid {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 196, 255, 0.1), transparent);
-            animation: shimmer 2s infinite;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        .radar-grid:nth-child(1) { transform: scale(0.2); }
+        .radar-grid:nth-child(2) { transform: scale(0.4); }
+        .radar-grid:nth-child(3) { transform: scale(0.6); }
+        .radar-grid:nth-child(4) { transform: scale(0.8); }
+
+        .radar-data {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(
+                50% 0%,
+                75% 25%,
+                100% 50%,
+                75% 75%,
+                50% 100%,
+                25% 75%,
+                0% 50%,
+                25% 25%
+            );
+            animation: radarPulse 4s infinite ease-in-out;
         }
 
-        .stats-grid {
+        .beta-side .radar-data {
+            background: linear-gradient(45deg, rgba(0, 196, 255, 0.3), rgba(0, 196, 255, 0.7));
+        }
+
+        .alpha-side .radar-data {
+            background: linear-gradient(45deg, rgba(165, 137, 255, 0.3), rgba(165, 137, 255, 0.7));
+        }
+
+        .heatmap {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 4px;
+            width: 100%;
+            height: 100%;
+            padding: 10px;
         }
 
-        .stat-card {
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        .heat-cell {
+            border-radius: 3px;
+            transition: all 0.5s ease;
+            animation: heatGlow 2s infinite alternate;
         }
 
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
+        .beta-side .heat-cell {
+            background: rgba(0, 196, 255, 0.3);
         }
 
-        .stat-title {
-            font-size: 14px;
-            color: var(--text-gray);
+        .alpha-side .heat-cell {
+            background: rgba(165, 137, 255, 0.3);
         }
 
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 5px;
+        .gauge-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
         }
 
-        .stat-change {
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        .gauge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 60px;
+            border-radius: 60px 60px 0 0;
+            overflow: hidden;
         }
 
-        .positive {
-            color: var(--positive);
+        .gauge-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            transition: height 1.5s ease;
         }
 
-        .negative {
-            color: var(--negative);
+        .beta-side .gauge-fill {
+            background: linear-gradient(to top, var(--accent-blue), rgba(0, 196, 255, 0.5));
         }
 
-        /* Features Section */
-        .features {
-            padding: 80px 0;
+        .alpha-side .gauge-fill {
+            background: linear-gradient(to top, var(--accent-purple), rgba(165, 137, 255, 0.5));
         }
 
-        .section-header {
-            text-align: center;
-            margin-bottom: 60px;
+        .gauge-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 60px 60px 0 0;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            box-sizing: border-box;
         }
 
-        .section-header h2 {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            background: linear-gradient(90deg, var(--accent), #4dabf7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .gauge-value {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            font-weight: 600;
         }
 
-        .section-header p {
-            color: var(--text-gray);
-            font-size: 1.1rem;
-            max-width: 600px;
+        .beta-side .gauge-value {
+            color: var(--accent-blue);
+        }
+
+        .alpha-side .gauge-value {
+            color: var(--accent-purple);
+        }
+
+        .pie-chart {
+            position: relative;
+            width: 120px;
+            height: 120px;
             margin: 0 auto;
-            line-height: 1.6;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--accent-blue) 0% 30%,
+                rgba(0, 196, 255, 0.5) 30% 65%,
+                rgba(0, 196, 255, 0.2) 65% 100%
+            );
+            animation: rotatePie 8s infinite linear;
         }
 
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
+        .alpha-side .pie-chart {
+            background: conic-gradient(
+                var(--accent-purple) 0% 40%,
+                rgba(165, 137, 255, 0.5) 40% 75%,
+                rgba(165, 137, 255, 0.2) 75% 100%
+            );
         }
 
-        .feature-card {
-            background: var(--card-bg);
-            border-radius: 15px;
-            padding: 30px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            border-color: rgba(0, 196, 255, 0.2);
-        }
-
-        .feature-icon {
+        .pie-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: 60px;
             height: 60px;
-            background: rgba(0, 196, 255, 0.1);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 25px;
-            color: var(--accent);
-            font-size: 24px;
+            border-radius: 50%;
+            background: var(--card-bg);
         }
 
-        .feature-card h3 {
-            font-size: 22px;
-            margin-bottom: 15px;
-        }
-
-        .feature-card p {
-            color: var(--text-gray);
-            line-height: 1.6;
-        }
-
-        /* Footer */
         footer {
-            padding: 60px 0 30px;
-            background: rgba(10, 15, 30, 0.9);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 80px;
+            padding: 40px 0;
+            text-align: center;
+            width: 100%;
+            max-width: 1400px;
+            border-top: 1px solid var(--border-color);
         }
 
-        .footer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        .footer-links {
+            display: flex;
+            justify-content: center;
             gap: 40px;
-            margin-bottom: 40px;
+            margin-bottom: 25px;
         }
 
-        .footer-col h4 {
-            font-size: 18px;
-            margin-bottom: 20px;
-            color: var(--accent);
-        }
-
-        .footer-col ul {
-            list-style: none;
-        }
-
-        .footer-col ul li {
-            margin-bottom: 12px;
-        }
-
-        .footer-col ul li a {
+        .footer-links a {
             color: var(--text-gray);
             text-decoration: none;
-            transition: color 0.3s;
+            transition: color var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .footer-col ul li a:hover {
-            color: var(--accent);
+        .footer-links a:hover {
+            color: var(--accent-blue);
         }
 
-        .footer-bottom {
-            text-align: center;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        .copyright {
             color: var(--text-gray);
-            font-size: 14px;
+            font-size: 0.95rem;
         }
 
-        /* Responsive */
-        @media (max-width: 992px) {
-            .preview-content {
-                grid-template-columns: 1fr;
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        @keyframes grow {
+            from { transform: scaleY(0); }
+            to { transform: scaleY(1); }
+        }
+
+        @keyframes radarPulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+            100% { opacity: 0.3; }
+        }
+
+        @keyframes heatGlow {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.8; }
+        }
+
+        @keyframes rotatePie {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 3D卡片效果 */
+        .feature-card-3d {
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .feature-card-3d:hover {
+            transform: rotateY(5deg) rotateX(5deg) translateY(-8px);
+        }
+
+        .feature-card-3d::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card-3d:hover::after {
+            opacity: 1;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .barbell-container {
+                max-width: 90%;
+            }
+        }
+
+        @media (max-width: 960px) {
+            .barbell-container {
+                flex-direction: column;
+                align-items: center;
+                max-width: 700px;
+                gap: 60px;
+            }
+            
+            .barbell-side {
+                width: 100%;
+                max-width: 600px;
             }
             
             .hero h1 {
-                font-size: 2.8rem;
+                font-size: 3.2rem;
             }
         }
 
         @media (max-width: 768px) {
-            .nav-links {
-                display: none;
+            .hero {
+                padding: 80px 0 40px;
             }
             
             .hero h1 {
-                font-size: 2.2rem;
+                font-size: 2.5rem;
             }
             
             .hero p {
-                font-size: 1rem;
+                font-size: 1.1rem;
             }
             
-            .hero-btns {
-                flex-direction: column;
-                align-items: center;
+            header {
+                padding: 15px 20px;
+            }
+            
+            .section-title {
+                font-size: 1.6rem;
+            }
+            
+            .user-actions {
+                gap: 10px;
+            }
+            
+            .btn-auth {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .logo-text {
+                font-size: 20px;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .btn-auth {
+                padding: 8px 16px;
+            }
+            
+            .barbell-bar::before,
+            .barbell-bar::after {
+                width: 20px;
+                height: 20px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <div class="logo-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="logo-text">Quantum Finance</div>
-                </div>
-                
-                <div class="nav-links">
-                    <a href="#" class="active">首页</a>
-                    <a href="#">市场概览</a>
-                    <a href="#">投资组合</a>
-                    <a href="#">实时监控</a>
-                    <a href="#">分析报告</a>
-                </div>
-                
-                <div class="user-actions">
-                    <a href="https://app.climbing2the.top" target="_self" class="login-button">登录</a>
-                </div>
-            </div>
-        </div>
-    </header>
+    <div class="header-gradient"></div>
+    <canvas id="particle-canvas"></canvas>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <h1>智能投资行情监控与分析平台</h1>
-            <p>实时追踪全球金融市场动态，深度分析投资组合表现，利用AI驱动的洞察力优化您的投资决策</p>
-            <div class="hero-btns">
-                <button class="btn btn-primary">开始免费试用</button>
-                <button class="btn btn-secondary">查看演示视频</button>
+    <div class="content-wrapper">
+        <header>
+            <a href="#" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-chart-network"></i>
+                </div>
+                <div class="logo-text">投资监控 Dashboard</div>
+            </a>
+            <div class="user-actions">
+                <a href="?login=true" target="_self" class="btn-auth btn-login">
+                    <i class="fas fa-sign-in-alt"></i>登录
+                </a>
             </div>
-        </div>
-    </section>
+        </header>
 
-    <!-- Dashboard Preview -->
-    <div class="container">
-        <div class="dashboard-preview">
-            <div class="preview-header">
-                <div class="preview-title">
-                    <i class="fas fa-chart-line"></i>
-                    <span>投资组合概览</span>
-                </div>
-                <div class="preview-controls">
-                    <span class="preview-red"></span>
-                    <span class="preview-yellow"></span>
-                    <span class="preview-green"></span>
-                </div>
-            </div>
-            <div class="preview-content">
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <div class="chart-title">投资组合表现分析</div>
-                        <div class="chart-actions">
-                            <i class="fas fa-expand"></i>
-                            <i class="fas fa-download"></i>
-                            <i class="fas fa-cog"></i>
+        <main>
+            <section class="hero">
+                <h1>构建您的投资杠铃策略</h1>
+                <p>一端是穿越周期的稳健基石，另一端是捕捉机遇的锐利锋芒。实时追踪全球金融市场动态，利用AI驱动的洞察力优化您的投资决策</p>
+            </section>
+
+            <h2 class="section-title">策略组合架构</h2>
+            <div class="barbell-bar"></div>
+            
+            <div class="barbell-container">
+                <!-- Beta Side -->
+                <div class="barbell-side beta-side">
+                    <div class="side-header">
+                        <span class="icon beta-icon"><i class="fas fa-shield-alt"></i></span>
+                        <h2>稳健基石 (Beta)</h2>
+                        <p>理解宏观环境，管理系统性风险</p>
+                    </div>
+                    <div class="feature-card feature-card-3d">
+                        <div class="feature-card-header">
+                            <div class="feature-icon beta-icon-bg"><i class="fas fa-compass"></i></div>
+                            <h3>周期定位仪</h3>
+                        </div>
+                        <p>融合美林时钟与信贷周期，对比中美宏观阶段，为大类资产配置提供战略视角。</p>
+                        <div class="chart-container">
+                            <div class="radar-chart">
+                                <div class="radar-grid"></div>
+                                <div class="radar-grid"></div>
+                                <div class="radar-grid"></div>
+                                <div class="radar-grid"></div>
+                                <div class="radar-data"></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="chart-placeholder">
-                        <canvas id="portfolioChart"></canvas>
+                    <div class="feature-card feature-card-3d">
+                        <div class="feature-card-header">
+                            <div class="feature-icon beta-icon-bg"><i class="fas fa-tachometer-alt"></i></div>
+                            <h3>风险仪表盘</h3>
+                        </div>
+                        <p>通过资产相关性、最大回撤和VIX指数，全面量化并管理您的投资组合风险。</p>
+                        <div class="chart-container">
+                            <div class="gauge-container">
+                                <div class="gauge">
+                                    <div class="gauge-fill" style="height: 65%;"></div>
+                                    <div class="gauge-mask"></div>
+                                </div>
+                                <div class="gauge-value">65%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-card feature-card-3d">
+                        <div class="feature-card-header">
+                            <div class="feature-icon beta-icon-bg"><i class="fas fa-meh"></i></div>
+                            <h3>市场情绪钟摆</h3>
+                        </div>
+                        <p>聚合主流恐惧与贪婪指数，量化市场情绪，助您实现逆向思考与操作。</p>
+                        <div class="chart-container">
+                            <div class="pie-chart">
+                                <div class="pie-center"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div class="stat-title">总资产价值</div>
-                            <i class="fas fa-wallet"></i>
+                <!-- Alpha Side -->
+                <div class="barbell-side alpha-side">
+                    <div class="side-header">
+                        <span class="icon alpha-icon"><i class="fas fa-rocket"></i></span>
+                        <h2>锐利锋芒 (Alpha)</h2>
+                        <p>发现非对称机会，捕捉超额收益</p>
+                    </div>
+                    <div class="feature-card feature-card-3d">
+                        <div class="feature-card-header">
+                            <div class="feature-icon alpha-icon-bg"><i class="fas fa-fire"></i></div>
+                            <h3>热点与叙事追踪</h3>
                         </div>
-                        <div class="stat-value">¥1,246,789</div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>3.2% 本月增长</span>
+                        <p>利用AI对海量新闻进行多维度评分，从市场噪音中发现真正重要的投资叙事。</p>
+                        <div class="chart-container">
+                            <div class="heatmap">
+                                <div class="heat-cell" style="animation-delay: 0.1s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.2s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.3s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.4s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.5s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.6s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.7s;"></div>
+                                
+                                <div class="heat-cell" style="animation-delay: 0.2s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.3s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.4s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.5s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.6s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.7s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.8s;"></div>
+                                
+                                <div class="heat-cell" style="animation-delay: 0.3s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.4s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.5s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.6s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.7s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.8s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.9s;"></div>
+                                
+                                <div class="heat-cell" style="animation-delay: 0.4s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.5s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.6s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.7s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.8s;"></div>
+                                <div class="heat-cell" style="animation-delay: 0.9s;"></div>
+                                <div class="heat-cell" style="animation-delay: 1.0s;"></div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div class="stat-title">今日收益</div>
-                            <i class="fas fa-coins"></i>
+                    <div class="feature-card feature-card-3d">
+                        <div class="feature-card-header">
+                            <div class="feature-icon alpha-icon-bg"><i class="fas fa-bell"></i></div>
+                            <h3>行情报警监控</h3>
                         </div>
-                        <div class="stat-value">¥24,567</div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>1.8% 今日增长</span>
+                        <p>自定义价格与均线偏离度报警，第一时间捕捉技术信号和市场异动。</p>
+                        <div class="chart-container">
+                            <svg class="line-chart" viewBox="0 0 500 150">
+                                <polyline points="0,120 50,100 100,40 150,70 200,30 250,90 300,50 350,100 400,60 450,80 500,40" />
+                            </svg>
                         </div>
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div class="stat-title">风险指数</div>
-                            <i class="fas fa-shield-alt"></i>
+                    <div class="feature-card feature-card-3d">
+                        <div class="feature-card-header">
+                            <div class="feature-icon alpha-icon-bg"><i class="fas fa-star"></i></div>
+                            <h3>关键指标聚合</h3>
                         </div>
-                        <div class="stat-value">中等</div>
-                        <div class="stat-change">
-                            <span>较上月降低12%</span>
+                        <p>一站式聚合多种市场关键指标，提供多维度市场温度计，辅助判断市场极端点。</p>
+                        <div class="chart-container">
+                            <div class="chart">
+                                <div class="bar" style="height: 50%; animation-delay: 0.1s;"></div>
+                                <div class="bar" style="height: 75%; animation-delay: 0.2s;"></div>
+                                <div class="bar" style="height: 60%; animation-delay: 0.3s;"></div>
+                                <div class="bar" style="height: 85%; animation-delay: 0.4s;"></div>
+                                <div class="bar" style="height: 40%; animation-delay: 0.5s;"></div>
+                                <div class="bar" style="height: 95%; animation-delay: 0.6s;"></div>
+                                <div class="bar" style="height: 70%; animation-delay: 0.7s;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
+
+        <footer>
+            <div class="footer-links">
+                <a href="#"><i class="fas fa-book"></i>使用文档</a>
+                <a href="#"><i class="fas fa-lightbulb"></i>策略观点</a>
+                <a href="#"><i class="fas fa-newspaper"></i>市场分析</a>
+                <a href="#"><i class="fas fa-headset"></i>联系我们</a>
+            </div>
+            <div class="copyright">
+                © 2023-2025 投资监控Dashboard | 专业量化投资工具平台
+            </div>
+        </footer>
     </div>
 
-    <!-- Features Section -->
-    <section class="features">
-        <div class="container">
-            <div class="section-header">
-                <h2>核心功能</h2>
-                <p>我们提供专业的投资监控工具，帮助您做出更明智的金融决策</p>
-            </div>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-bolt"></i>
-                    </div>
-                    <h3>实时市场数据</h3>
-                    <p>获取全球股票、外汇、加密货币和大宗商品的实时行情数据，延迟低于100毫秒，确保您始终掌握最新市场动态。</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <h3>AI智能分析</h3>
-                    <p>利用机器学习算法分析市场趋势，预测价格走势，并提供个性化的投资建议，帮助您优化投资组合。</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-bell"></i>
-                    </div>
-                    <h3>智能预警系统</h3>
-                    <p>设置自定义的行情警报，当市场出现异常波动或达到您设定的阈值时，即时通过多种渠道通知您。</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
-                    <h3>投资组合分析</h3>
-                    <p>深入分析您的投资组合表现，评估风险收益比，提供资产配置优化建议，助您实现投资目标。</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-globe"></i>
-                    </div>
-                    <h3>全球市场覆盖</h3>
-                    <p>支持全球主要交易所和金融市场的行情监控，包括美股、港股、A股、欧洲股市等主要市场。</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                    <h3>专业分析报告</h3>
-                    <p>定期生成专业的投资分析报告，包括市场趋势、行业分析和个股评估，为您的投资决策提供数据支持。</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-col">
-                    <h4>Quantum Finance</h4>
-                    <p style="color: var(--text-gray); margin-bottom: 20px; line-height: 1.6;">专业的投资行情监控与分析平台，帮助投资者做出更明智的决策。</p>
-                    <div style="display: flex; gap: 15px;">
-                        <a href="#" style="color: var(--text-gray); font-size: 20px;"><i class="fab fa-twitter"></i></a>
-                        <a href="#" style="color: var(--text-gray); font-size: 20px;"><i class="fab fa-linkedin"></i></a>
-                        <a href="#" style="color: var(--text-gray); font-size: 20px;"><i class="fab fa-facebook"></i></a>
-                        <a href="#" style="color: var(--text-gray); font-size: 20px;"><i class="fab fa-youtube"></i></a>
-                    </div>
-                </div>
-                
-                <div class="footer-col">
-                    <h4>产品</h4>
-                    <ul>
-                        <li><a href="#">市场监控</a></li>
-                        <li><a href="#">投资组合</a></li>
-                        <li><a href="#">智能分析</a></li>
-                        <li><a href="#">预警系统</a></li>
-                        <li><a href="#">研究报告</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-col">
-                    <h4>资源</h4>
-                    <ul>
-                        <li><a href="#">帮助中心</a></li>
-                        <li><a href="#">使用教程</a></li>
-                        <li><a href="#">API文档</a></li>
-                        <li><a href="#">市场动态</a></li>
-                        <li><a href="#">博客</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-col">
-                    <h4>联系我们</h4>
-                    <ul>
-                        <li><a href="#"><i class="fas fa-envelope"></i> support@quantumfinance.com</a></li>
-                        <li><a href="#"><i class="fas fa-phone"></i> +86 10 8888 7777</a></li>
-                        <li><a href="#"><i class="fas fa-map-marker-alt"></i> 北京市朝阳区金融科技中心</a></li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2023 Quantum Finance. 保留所有权利。 | 京ICP备12345678号 | 隐私政策 | 使用条款</p>
-            </div>
-        </div>
-    </footer>
-
     <script>
-        // 初始化图表
-        document.addEventListener('DOMContentLoaded', function() {
-            const ctx = document.getElementById('portfolioChart').getContext('2d');
-            
-            // 模拟数据
-            const data = {
-                labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
-                datasets: [
-                    {
-                        label: '投资组合价值',
-                        data: [850, 920, 880, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1220, 1246],
-                        borderColor: '#00c4ff',
-                        backgroundColor: 'rgba(0, 196, 255, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    },
-                    {
-                        label: '基准指数',
-                        data: [800, 830, 850, 870, 900, 930, 960, 1000, 1030, 1060, 1100, 1130],
-                        borderColor: '#4dabf7',
-                        backgroundColor: 'rgba(77, 171, 247, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        borderDash: [5, 5]
-                    }
-                ]
-            };
-            
-            const config = {
-                type: 'line',
-                data: data,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                color: '#f0f4f8',
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
-                            },
-                            ticks: {
-                                color: '#a0aec0'
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
-                            },
-                            ticks: {
-                                color: '#a0aec0',
-                                callback: function(value) {
-                                    return '¥' + value + 'K';
-                                }
-                            }
-                        }
-                    },
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    animation: {
-                        duration: 2000
+        // 增强的粒子系统
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouse = { x: null, y: null, radius: 200 };
+        
+        // 屏幕调整大小处理
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        }
+        
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.originX = x;
+                this.originY = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+                this.speed = Math.random() * 0.2 + 0.1;
+                this.oscillation = Math.random() * 0.05;
+                this.oscillationSpeed = Math.random() * 0.02 + 0.01;
+                this.oscillationOffset = Math.random() * Math.PI * 2;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+
+            update() {
+                // 边界检测与反弹
+                if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
+                if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
+
+                // 振荡效果
+                const time = Date.now() * this.oscillationSpeed + this.oscillationOffset;
+                this.x += Math.sin(time) * this.oscillation;
+                this.y += Math.cos(time) * this.oscillation;
+
+                // 鼠标交互
+                if (mouse.x !== null && mouse.y !== null) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < mouse.radius + this.size) {
+                        let forceDirectionX = dx / distance;
+                        let forceDirectionY = dy / distance;
+                        let force = (mouse.radius - distance) / mouse.radius;
+                        
+                        this.x -= forceDirectionX * force * this.speed * 8;
+                        this.y -= forceDirectionY * force * this.speed * 8;
+                    } else {
+                        // 返回原点
+                        this.x += (this.originX - this.x) * 0.005;
+                        this.y += (this.originY - this.y) * 0.005;
                     }
                 }
-            };
+                
+                // 移动
+                this.x += this.directionX * this.speed;
+                this.y += this.directionY * this.speed;
+                this.draw();
+            }
+        }
+        
+        function init() {
+            particles = [];
+            let numberOfParticles = (canvas.height * canvas.width) / 6000;
             
-            new Chart(ctx, config);
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2.5) + 1;
+                let x = Math.random() * canvas.width;
+                let y = Math.random() * canvas.height;
+                let directionX = (Math.random() * 0.4) - 0.2;
+                let directionY = (Math.random() * 0.4) - 0.2;
+                let color = i % 3 === 0 ? 'rgba(165, 137, 255, 0.8)' : 'rgba(0, 196, 255, 0.8)';
+                
+                particles.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        function connect() {
+            let opacityValue;
+            
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a; b < particles.length; b++) {
+                    let dx = particles[a].x - particles[b].x;
+                    let dy = particles[a].y - particles[b].y;
+                    let distance = dx * dx + dy * dy;
+                    
+                    if (distance < 15000) {
+                        opacityValue = 1 - distance / 15000;
+                        ctx.strokeStyle = `rgba(120, 165, 230, ${opacityValue})`;
+                        ctx.lineWidth = opacityValue * 1.2;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+            }
+            
+            connect();
+        }
+        
+        // 事件监听器
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('mousemove', function(event) {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+        window.addEventListener('mouseout', function() {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        // 初始化和动画
+        resizeCanvas();
+        animate();
+        
+        // 卡片悬停效果
+        const cards = document.querySelectorAll('.feature-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                const icons = card.querySelectorAll('.feature-icon i');
+                icons.forEach(icon => {
+                    icon.classList.add('fa-spin');
+                    setTimeout(() => icon.classList.remove('fa-spin'), 1000);
+                });
+            });
         });
     </script>
 </body>
