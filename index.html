@@ -1,0 +1,821 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投资监控 Dashboard | 杠铃策略分析平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // 启用Tailwind暗色模式
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#0FC6C2',
+                        danger: '#FF5252',
+                        warning: '#FF9800',
+                        success: '#4CAF50',
+                        dark: '#1E293B',
+                        'dark-light': '#334155',
+                        'gray-light': '#F1F5F9',
+                        'gray-medium': '#94A3B8'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px rgba(0, 0, 0, 0.08)',
+                        'card-hover': '0 10px 30px rgba(0, 0, 0, 0.12)',
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .bg-gradient-blue {
+                background: linear-gradient(135deg, #165DFF 0%, #0FC6C2 100%);
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-5px);
+            }
+            .glass-effect {
+                background: rgba(255, 255, 255, 0.8);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+            .glass-effect-dark {
+                background: rgba(30, 41, 59, 0.8); /* 深色模式下的玻璃效果 */
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-light text-dark antialiased dark:bg-dark dark:text-white">
+    <!-- 导航栏 -->
+    <header class="fixed top-0 left-0 right-0 z-50 transition-all duration-300" id="navbar">
+        <div class="glass-effect border-b border-gray-200 dark:glass-effect-dark dark:border-dark-light">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <h1 class="text-xl font-bold text-primary">投资监控 Dashboard</h1>
+                        </div>
+                        <div class="hidden md:block ml-10">
+                            <nav class="flex space-x-4">
+                                <a href="#system-overview" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">系统概览</a>
+                                <a href="#beta-strategy" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">稳健基石 (Beta)</a>
+                                <a href="#alpha-strategy" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">锐利锋芒 (Alpha)</a>
+                                <a href="#features" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">系统特点</a>
+                            </nav>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-4">
+                        <!-- 夜间模式切换按钮 -->
+                        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-light transition-colors">
+                            <i class="fa fa-moon-o text-dark-light dark:text-gray-medium text-xl" id="theme-icon"></i>
+                        </button>
+                        <button class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            登录
+                        </button>
+                    </div>
+                    <div class="md:hidden">
+                        <button type="button" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white" id="mobile-menu-button">
+                            <i class="fa fa-bars text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 移动端菜单 -->
+        <div class="hidden md:hidden bg-white dark:bg-dark-light border-b border-gray-200 dark:border-dark" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#system-overview" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium">系统概览</a>
+                <a href="#beta-strategy" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium">稳健基石 (Beta)</a>
+                <a href="#alpha-strategy" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium">锐利锋芒 (Alpha)</a>
+                <a href="#features" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium">系统特点</a>
+                <!-- 移动端的夜间模式按钮 -->
+                <button id="mobile-theme-toggle" class="w-full flex items-center justify-center p-2 mt-2 rounded-md text-base font-medium text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white">
+                    <i class="fa fa-moon-o mr-2" id="mobile-theme-icon"></i> 夜间模式
+                </button>
+                <button class="w-full bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors mt-3">
+                    登录
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 英雄区域 -->
+    <section class="pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-blue text-white">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center">
+                <div class="md:w-1/2 mb-10 md:mb-0">
+                    <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight text-shadow mb-4">
+                        杠铃策略投资<br>监控与分析平台
+                    </h1>
+                    <p class="text-[clamp(1rem,2vw,1.25rem)] text-white/90 mb-8 max-w-xl">
+                        融合宏观经济分析与AI驱动的市场洞察，助您构建平衡且锐利的投资组合，把握市场周期与非对称机会。
+                    </p>
+                    <!-- 删除了观看演示按钮 -->
+                </div>
+                <div class="md:w-1/2">
+                    <div class="relative">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-xl blur opacity-70"></div>
+                        <div class="relative bg-white dark:bg-dark-light rounded-xl overflow-hidden shadow-2xl">
+                            <img src="https://picsum.photos/800/600?random=1" alt="投资监控仪表盘界面" class="w-full h-auto">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
+                                <div class="p-6">
+                                    <h3 class="text-xl font-semibold text-white">智能投资监控系统</h3>
+                                    <p class="text-white/80">实时监控市场动态，智能分析投资机会</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 系统概览 -->
+    <section id="system-overview" class="py-16 bg-white dark:bg-dark">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">系统概览</h2>
+                <p class="text-gray-medium dark:text-gray-400 max-w-2xl mx-auto text-lg">基于杠铃投资策略的智能监控系统，帮助投资者在控制风险的同时捕捉超额收益机会</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div class="bg-gray-light dark:bg-dark-light rounded-xl p-8 shadow-card card-hover">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-primary/10 dark:bg-primary/20 p-3 rounded-lg">
+                            <i class="fa fa-shield text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold ml-4 text-dark dark:text-white">稳健基石 (Beta)</h3>
+                    </div>
+                    <p class="text-dark-light dark:text-gray-300 mb-6">理解宏观环境，管理系统性风险，构建投资组合的安全垫</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4">
+                            <i class="fa fa-line-chart text-primary mb-2"></i>
+                            <h4 class="font-medium text-dark dark:text-white">周期定位仪</h4>
+                        </div>
+                        <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4">
+                            <i class="fa fa-dashboard text-primary mb-2"></i>
+                            <h4 class="font-medium text-dark dark:text-white">风险仪表盘</h4>
+                        </div>
+                        <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4">
+                            <i class="fa fa-balance-scale text-primary mb-2"></i>
+                            <h4 class="font-medium text-dark dark:text-white">市场情绪钟摆</h4>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-light dark:bg-dark-light rounded-xl p-8 shadow-card card-hover">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-secondary/10 dark:bg-secondary/20 p-3 rounded-lg">
+                            <i class="fa fa-rocket text-secondary text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold ml-4 text-dark dark:text-white">锐利锋芒 (Alpha)</h3>
+                    </div>
+                    <p class="text-dark-light dark:text-gray-300 mb-6">发现非对称机会，捕捉超额收益，为投资组合提供增长动力</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4">
+                            <i class="fa fa-newspaper-o text-secondary mb-2"></i>
+                            <h4 class="font-medium text-dark dark:text-white">热点与叙事追踪</h4>
+                        </div>
+                        <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4">
+                            <i class="fa fa-bell text-secondary mb-2"></i>
+                            <h4 class="font-medium text-dark dark:text-white">行情报警监控</h4>
+                        </div>
+                        <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4">
+                            <i class="fa fa-bar-chart text-secondary mb-2"></i>
+                            <h4 class="font-medium text-dark dark:text-white">关键指标聚合</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Beta 策略部分 -->
+    <section id="beta-strategy" class="py-16 bg-gray-light dark:bg-dark-light">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">稳健基石 (Beta)</h2>
+                <p class="text-gray-medium dark:text-gray-400 max-w-2xl mx-auto text-lg">理解宏观环境，管理系统性风险</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- 周期定位仪 -->
+                <div class="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-card card-hover">
+                    <div class="relative h-48">
+                        <img src="https://picsum.photos/600/400?random=2" alt="周期定位仪界面" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                            <div class="p-6">
+                                <h3 class="text-xl font-semibold text-white">周期定位仪</h3>
+                                <p class="text-white/80 text-sm">宏观周期分析工具</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-dark-light dark:text-gray-300 mb-4">融合美林时钟与信贷周期，对比中美宏观阶段，为大类资产配置提供战略视角。</p>
+                        <div class="flex items-center text-sm text-gray-medium dark:text-gray-400">
+                            <span class="mr-4"><i class="fa fa-line-chart mr-1"></i> 宏观分析</span>
+                            <span class="mr-4"><i class="fa fa-globe mr-1"></i> 中美对比</span>
+                            <span><i class="fa fa-calendar mr-1"></i> 周期识别</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 风险仪表盘 -->
+                <div class="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-card card-hover">
+                    <div class="relative h-48">
+                        <img src="https://picsum.photos/600/400?random=3" alt="风险仪表盘界面" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                            <div class="p-6">
+                                <h3 class="text-xl font-semibold text-white">风险仪表盘</h3>
+                                <p class="text-white/80 text-sm">全面风险管理工具</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-dark-light dark:text-gray-300 mb-4">通过资产相关性、最大回撤和VIX指数，全面量化并管理您的投资组合风险。</p>
+                        <div class="flex items-center text-sm text-gray-medium dark:text-gray-400">
+                            <span class="mr-4"><i class="fa fa-link mr-1"></i> 相关性分析</span>
+                            <span class="mr-4"><i class="fa fa-area-chart mr-1"></i> 回撤分析</span>
+                            <span><i class="fa fa-exclamation-triangle mr-1"></i> 风险预警</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 市场情绪钟摆 -->
+                <div class="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-card card-hover">
+                    <div class="relative h-48">
+                        <img src="https://picsum.photos/600/400?random=4" alt="市场情绪钟摆界面" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                            <div class="p-6">
+                                <h3 class="text-xl font-semibold text-white">市场情绪钟摆</h3>
+                                <p class="text-white/80 text-sm">市场情绪分析工具</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-dark-light dark:text-gray-300 mb-4">聚合主流恐惧与贪婪指数，量化市场情绪，助您实现逆向思考与操作。</p>
+                        <div class="flex items-center text-sm text-gray-medium dark:text-gray-400">
+                            <span class="mr-4"><i class="fa fa-heartbeat mr-1"></i> 情绪指数</span>
+                            <span class="mr-4"><i class="fa fa-comments mr-1"></i> 社交媒体</span>
+                            <span><i class="fa fa-balance-scale mr-1"></i> 逆向投资</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 实时数据演示 -->
+    <section class="py-16 bg-white dark:bg-dark">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">实时数据分析</h2>
+                <p class="text-gray-medium dark:text-gray-400 max-w-2xl mx-auto text-lg">通过我们的系统，实时监控市场关键指标和投资组合表现</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 bg-gray-light dark:bg-dark-light rounded-xl p-6 shadow-card">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-dark dark:text-white">全球市场指数表现</h3>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-sm bg-primary text-white rounded-md">日</button>
+                            <button class="px-3 py-1 text-sm bg-gray-200 dark:bg-dark text-dark-light dark:text-gray-300 rounded-md">周</button>
+                            <button class="px-3 py-1 text-sm bg-gray-200 dark:bg-dark text-dark-light dark:text-gray-300 rounded-md">月</button>
+                        </div>
+                    </div>
+                    <div class="h-80">
+                        <canvas id="marketIndexChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-light dark:bg-dark-light rounded-xl p-6 shadow-card">
+                    <h3 class="text-lg font-semibold text-dark dark:text-white mb-6">风险指标监控</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm font-medium text-dark dark:text-white">资产相关性</span>
+                                <span class="text-sm text-success">0.32</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-dark rounded-full h-2.5">
+                                <div class="bg-success h-2.5 rounded-full" style="width: 32%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm font-medium text-dark dark:text-white">VIX指数</span>
+                                <span class="text-sm text-warning">18.5</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-dark rounded-full h-2.5">
+                                <div class="bg-warning h-2.5 rounded-full" style="width: 58%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm font-medium text-dark dark:text-white">最大回撤</span>
+                                <span class="text-sm text-danger">-8.2%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-dark rounded-full h-2.5">
+                                <div class="bg-danger h-2.5 rounded-full" style="width: 42%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm font-medium text-dark dark:text-white">市场情绪</span>
+                                <span class="text-sm text-primary">中性偏乐观</span>
+                            </div>
+                            <div class="flex space-x-1">
+                                <div class="w-1/7 h-2 rounded-full bg-danger"></div>
+                                <div class="w-1/7 h-2 rounded-full bg-danger"></div>
+                                <div class="w-1/7 h-2 rounded-full bg-warning"></div>
+                                <div class="w-1/7 h-2 rounded-full bg-warning"></div>
+                                <div class="w-1/7 h-2 rounded-full bg-primary"></div>
+                                <div class="w-1/7 h-2 rounded-full bg-primary"></div>
+                                <div class="w-1/7 h-2 rounded-full bg-success"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Alpha 策略部分 -->
+    <section id="alpha-strategy" class="py-16 bg-gray-light dark:bg-dark-light">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">锐利锋芒 (Alpha)</h2>
+                <p class="text-gray-medium dark:text-gray-400 max-w-2xl mx-auto text-lg">发现非对称机会，捕捉超额收益</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- 热点与叙事追踪 -->
+                <div class="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-card card-hover">
+                    <div class="relative h-48">
+                        <img src="https://picsum.photos/600/400?random=5" alt="热点与叙事追踪界面" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                            <div class="p-6">
+                                <h3 class="text-xl font-semibold text-white">热点与叙事追踪</h3>
+                                <p class="text-white/80 text-sm">AI驱动的市场叙事分析</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-dark-light dark:text-gray-300 mb-4">利用AI对海量新闻进行多维度评分，从市场噪音中发现真正重要的投资叙事。</p>
+                        <div class="flex items-center text-sm text-gray-medium dark:text-gray-400">
+                            <span class="mr-4"><i class="fa fa-newspaper-o mr-1"></i> 新闻分析</span>
+                            <span class="mr-4"><i class="fa fa-language mr-1"></i> 自然语言处理</span>
+                            <span><i class="fa fa-lightbulb-o mr-1"></i> 投资叙事</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 行情报警监控 -->
+                <div class="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-card card-hover">
+                    <div class="relative h-48">
+                        <img src="https://picsum.photos/600/400?random=6" alt="行情报警监控界面" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                            <div class="p-6">
+                                <h3 class="text-xl font-semibold text-white">行情报警监控</h3>
+                                <p class="text-white/80 text-sm">实时市场异动监测</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-dark-light dark:text-gray-300 mb-4">自定义价格与均线偏离度报警，第一时间捕捉技术信号和市场异动。</p>
+                        <div class="flex items-center text-sm text-gray-medium dark:text-gray-400">
+                            <span class="mr-4"><i class="fa fa-bell mr-1"></i> 自定义报警</span>
+                            <span class="mr-4"><i class="fa fa-line-chart mr-1"></i> 技术分析</span>
+                            <span><i class="fa fa-bolt mr-1"></i> 实时监控</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 关键指标聚合 -->
+                <div class="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-card card-hover">
+                    <div class="relative h-48">
+                        <img src="https://picsum.photos/600/400?random=7" alt="关键指标聚合界面" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                            <div class="p-6">
+                                <h3 class="text-xl font-semibold text-white">关键指标聚合</h3>
+                                <p class="text-white/80 text-sm">多维度市场温度计</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-dark-light dark:text-gray-300 mb-4">一站式聚合多种市场关键指标，提供多维度市场温度计，辅助判断市场极端点。</p>
+                        <div class="flex items-center text-sm text-gray-medium dark:text-gray-400">
+                            <span class="mr-4"><i class="fa fa-tachometer mr-1"></i> 指标仪表盘</span>
+                            <span class="mr-4"><i class="fa fa-pie-chart mr-1"></i> 多维度分析</span>
+                            <span><i class="fa fa-exchange mr-1"></i> 市场极端点</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 系统特点 -->
+    <section id="features" class="py-16 bg-white dark:bg-dark">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">系统特点</h2>
+                <p class="text-gray-medium dark:text-gray-400 max-w-2xl mx-auto text-lg">我们的投资监控系统为您提供全方位的投资决策支持</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover">
+                    <div class="text-primary text-3xl mb-4">
+                        <i class="fa fa-database"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">多源数据整合</h3>
+                    <p class="text-dark-light dark:text-gray-300">整合全球宏观经济数据、金融市场数据、新闻资讯和社交媒体数据，为您提供全面的市场视角。</p>
+                </div>
+                
+                <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover">
+                    <div class="text-primary text-3xl mb-4">
+                        <i class="fa fa-brain"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">AI驱动分析</h3>
+                    <p class="text-dark-light dark:text-gray-300">利用人工智能技术分析海量数据，识别市场模式和趋势，提供客观的投资建议。</p>
+                </div>
+                
+                <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover">
+                    <div class="text-primary text-3xl mb-4">
+                        <i class="fa fa-mobile"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">全平台支持</h3>
+                    <p class="text-dark-light dark:text-gray-300">无论是桌面端、平板还是手机，您都可以随时随地访问和管理您的投资监控系统。</p>
+                </div>
+                
+                <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover">
+                    <div class="text-primary text-3xl mb-4">
+                        <i class="fa fa-shield"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">安全可靠</h3>
+                    <p class="text-dark-light dark:text-gray-300">采用银行级别的安全技术保护您的投资数据，确保数据的安全性和隐私性。</p>
+                </div>
+                
+                <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover">
+                    <div class="text-primary text-3xl mb-4">
+                        <i class="fa fa-chart-line"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">实时监控</h3>
+                    <p class="text-dark-light dark:text-gray-300">实时监控全球金融市场动态，第一时间获取市场变化和投资机会。</p>
+                </div>
+                
+                <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover">
+                    <div class="text-primary text-3xl mb-4">
+                        <i class="fa fa-cogs"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">自定义配置</h3>
+                    <p class="text-dark-light dark:text-gray-300">根据您的投资偏好和风险承受能力，自定义监控指标和报警阈值，打造专属您的投资监控系统。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 客户评价 -->
+    <section class="py-16 bg-gray-light dark:bg-dark-light">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">客户评价</h2>
+                <p class="text-gray-medium dark:text-gray-400 max-w-2xl mx-auto text-lg">听听我们的客户如何评价投资监控 Dashboard</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white dark:bg-dark p-8 rounded-xl shadow-card card-hover">
+                    <div class="flex items-center mb-6">
+                        <img src="https://picsum.photos/100/100?random=10" alt="RobotA" class="w-12 h-12 rounded-full object-cover">
+                        <div class="ml-4">
+                            <h4 class="font-semibold text-dark dark:text-white">RobotA</h4>
+                            <p class="text-gray-medium dark:text-gray-400 text-sm">资深投资者</p>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star text-warning"></i>
+                    </div>
+                    <p class="text-dark-light dark:text-gray-300 italic">"投资监控 Dashboard 帮助我清晰地了解市场周期和风险状况，让我的投资决策更加理性和系统化。"</p>
+                </div>
+                
+                <div class="bg-white dark:bg-dark p-8 rounded-xl shadow-card card-hover">
+                    <div class="flex items-center mb-6">
+                        <img src="https://picsum.photos/100/100?random=11" alt="IdolB" class="w-12 h-12 rounded-full object-cover">
+                        <div class="ml-4">
+                            <h4 class="font-semibold text-dark dark:text-white">IdolB</h4>
+                            <p class="text-gray-medium dark:text-gray-400 text-sm">家族办公室总监</p>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star-half-o text-warning"></i>
+                    </div>
+                    <p class="text-dark-light dark:text-gray-300 italic">"系统提供的宏观周期分析和风险指标监控功能非常实用，帮助我们更好地管理家族资产，规避系统性风险。"</p>
+                </div>
+                
+                <div class="bg-white dark:bg-dark p-8 rounded-xl shadow-card card-hover">
+                    <div class="flex items-center mb-6">
+                        <img src="https://picsum.photos/100/100?random=12" alt="ManagerC" class="w-12 h-12 rounded-full object-cover">
+                        <div class="ml-4">
+                            <h4 class="font-semibold text-dark dark:text-white">ManagerC</h4>
+                            <p class="text-gray-medium dark:text-gray-400 text-sm">私募基金经理</p>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star text-warning"></i>
+                        <i class="fa fa-star text-warning"></i>
+                    </div>
+                    <p class="text-dark-light dark:text-gray-300 italic">"AI驱动的热点与叙事追踪功能是我们团队的最爱，它能帮助我们提前发现市场趋势和投资机会，获取超额收益。"</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white/70 py-12">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-4">投资监控 Dashboard</h3>
+                    <p class="mb-4">专业的杠铃策略投资监控与分析平台，助您把握市场周期，发现投资机会。</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-white/70 hover:text-white transition-colors">
+                            <i class="fa fa-weibo"></i>
+                        </a>
+                        <a href="#" class="text-white/70 hover:text-white transition-colors">
+                            <i class="fa fa-wechat"></i>
+                        </a>
+                        <a href="#" class="text-white/70 hover:text-white transition-colors">
+                            <i class="fa fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="text-white/70 hover:text-white transition-colors">
+                            <i class="fa fa-twitter"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-semibold mb-4">产品</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="hover:text-white transition-colors">稳健基石 (Beta)</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">锐利锋芒 (Alpha)</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">定价方案</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">API接口</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-semibold mb-4">资源</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="hover:text-white transition-colors">帮助中心</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">使用教程</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">市场洞察</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">投资学院</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-semibold mb-4">公司</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="hover:text-white transition-colors">关于我们</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">联系我们</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">加入我们</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">服务条款</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-white/10 mt-12 pt-8 text-center text-sm">
+                <p>© 2025 投资监控 Dashboard. 保留所有权利。</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 导航栏滚动效果
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow-md');
+            } else {
+                navbar.classList.remove('shadow-md');
+            }
+        });
+        
+        // 移动端菜单切换
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+                
+                // 关闭移动端菜单
+                if (!mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        });
+        
+        // 图表初始化
+        window.addEventListener('load', () => {
+            const ctx = document.getElementById('marketIndexChart').getContext('2d');
+            
+            // 深色模式下的图表配置
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+            const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
+            
+            const marketIndexChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月'],
+                    datasets: [
+                        {
+                            label: '上证指数',
+                            data: [3200, 3250, 3180, 3300, 3400, 3350, 3450],
+                            borderColor: '#165DFF',
+                            backgroundColor: 'rgba(22, 93, 255, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '标普500',
+                            data: [4100, 4200, 4150, 4300, 4400, 4500, 4600],
+                            borderColor: '#0FC6C2',
+                            backgroundColor: 'rgba(15, 198, 194, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '恒生指数',
+                            data: [20000, 19500, 19000, 19200, 19800, 20100, 20500],
+                            borderColor: '#FF9800',
+                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: textColor
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                drawBorder: false,
+                                color: gridColor
+                            },
+                            ticks: {
+                                color: textColor
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: textColor
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+            
+            // 监听深色模式变化，更新图表样式
+            const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            darkModeMediaQuery.addEventListener('change', (e) => {
+                updateChartTheme(e.matches);
+            });
+            
+            function updateChartTheme(isDark) {
+                marketIndexChart.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                marketIndexChart.options.scales.y.ticks.color = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
+                marketIndexChart.options.scales.x.ticks.color = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
+                marketIndexChart.options.plugins.legend.labels.color = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
+                marketIndexChart.update();
+            }
+        });
+        
+        // 夜间模式切换功能
+        const themeToggle = document.getElementById('theme-toggle');
+        const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const mobileThemeIcon = document.getElementById('mobile-theme-icon');
+        
+        // 检查用户偏好的主题
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            updateThemeIcon(true);
+        } else {
+            document.documentElement.classList.remove('dark');
+            updateThemeIcon(false);
+        }
+        
+        // 主题切换事件
+        themeToggle.addEventListener('click', toggleTheme);
+        mobileThemeToggle.addEventListener('click', () => {
+            toggleTheme();
+            // 关闭移动端菜单
+            if (!mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.add('hidden');
+            }
+        });
+        
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+                updateThemeIcon(false);
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+                updateThemeIcon(true);
+            }
+            
+            // 更新图表主题
+            const ctx = document.getElementById('marketIndexChart').getContext('2d');
+            const chart = Chart.getChart(ctx);
+            if (chart) {
+                const isDark = document.documentElement.classList.contains('dark');
+                chart.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                chart.options.scales.y.ticks.color = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
+                chart.options.scales.x.ticks.color = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
+                chart.options.plugins.legend.labels.color = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
+                chart.update();
+            }
+        }
+        
+        function updateThemeIcon(isDark) {
+            if (isDark) {
+                themeIcon.classList.remove('fa-moon-o');
+                themeIcon.classList.add('fa-sun-o');
+                mobileThemeIcon.classList.remove('fa-moon-o');
+                mobileThemeIcon.classList.add('fa-sun-o');
+            } else {
+                themeIcon.classList.remove('fa-sun-o');
+                themeIcon.classList.add('fa-moon-o');
+                mobileThemeIcon.classList.remove('fa-sun-o');
+                mobileThemeIcon.classList.add('fa-moon-o');
+            }
+        }
+    </script>
+</body></html>
