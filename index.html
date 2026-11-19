@@ -1,570 +1,735 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>投资监控 Dashboard | 杠铃策略分析平台</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>投资监控 Dashboard — 杠铃策略的监视器</title>
+<meta name="description" content="一个只做告知、不做执行的杠铃策略投资监控系统：左侧全天候稳健，右侧凸性机会，中间不预测。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230B1220'/><circle cx='9' cy='16' r='5' fill='%234A7DFF'/><circle cx='23' cy='16' r='6.5' fill='%23F0B429'/><rect x='13' y='15.2' width='6' height='1.6' fill='%2394A3B8'/></svg>">
+<style>
+/* ============================================================
+   投资监控 Dashboard 欢迎页
+   零外部依赖：无 CDN、无外部字体、无外部图片、无视频文件
+   所有图形为内联 SVG，所有样式在本文件内
+   ============================================================ */
 
-    <script>
-        tailwind.config = {
-            darkMode: 'class', 
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#165DFF',
-                        secondary: '#0FC6C2',
-                        danger: '#FF5252',
-                        warning: '#FF9800',
-                        success: '#4CAF50',
-                        
-                        // 统一暗色背景：深海蓝
-                        dark: '#0F172A', 
-                        'dark-light': '#1E293B',
-                        
-                        'gray-light': '#F1F5F9',
-                        'gray-medium': '#94A3B8'
-                    },
-                    fontFamily: {
-                        inter: ['Inter', 'sans-serif'],
-                        serif: ['Playfair Display', 'serif'],
-                    },
-                    boxShadow: {
-                        'card': '0 4px 20px rgba(0, 0, 0, 0.08)',
-                        'card-hover': '0 10px 30px rgba(0, 0, 0, 0.12)',
-                    }
-                },
-            }
-        }
-    </script>
+:root{
+  --bg:#0B1220; --bg-soft:#111C30; --card:#131F36; --card-2:#182742;
+  --line:#22314E; --text:#E8EDF7; --text-2:#9FB0CC; --text-3:#6B7C9B;
+  --left:#4A7DFF; --left-soft:rgba(74,125,255,.14);
+  --right:#F0B429; --right-soft:rgba(240,180,41,.13);
+  --radius:14px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#F7F9FC; --bg-soft:#FFFFFF; --card:#FFFFFF; --card-2:#F2F5FA;
+    --line:#E1E7F0; --text:#14202F; --text-2:#4E5F78; --text-3:#8494AB;
+    --left:#2E5FD4; --left-soft:rgba(46,95,212,.10);
+    --right:#B57800; --right-soft:rgba(181,120,0,.10);
+  }
+}
 
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .glass-effect { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-            .glass-effect-dark { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-            .bg-gradient-blue { background: linear-gradient(135deg, #165DFF 0%, #0FC6C2 100%); }
-            .text-shadow { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-            
-            /* --- 开场动画层级控制 --- */
-            #layer-intro { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 50; pointer-events: none; display: flex; justify-content: center; align-items: center; background: #0F172A; }
-            #layer-video { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 40; background: black; opacity: 0; }
-            
-            /* 内容层：初始透明，Z轴最高，确保覆盖 */
-            #layer-content { position: relative; z-index: 100; opacity: 0; pointer-events: none; background-color: #0F172A; min-height: 100vh; }
-            
-            /* 迷雾与呼吸效果 */
-            .fog-flow { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.7; }
-            .fog-1 { width: 120vw; height: 120vh; top: -10%; left: -10%; background: radial-gradient(circle, rgba(22, 93, 255, 0.2) 0%, rgba(15, 23, 42, 0) 70%); animation: drift 20s infinite alternate ease-in-out; }
-            .fog-2 { width: 100vw; height: 100vh; bottom: -20%; right: -20%; background: radial-gradient(ellipse, rgba(212, 175, 55, 0.15) 0%, rgba(15, 23, 42, 0) 60%); animation: drift-reverse 25s infinite alternate ease-in-out; }
-            
-            @keyframes drift { 100% { transform: translate(50px, 30px) rotate(5deg); } }
-            @keyframes drift-reverse { 100% { transform: translate(-40px, -20px) scale(1.1); } }
-            
-            .breathing-text { animation: breathe 6s infinite ease-in-out; }
-            @keyframes breathe { 0%, 100% { opacity: 0.8; transform: scale(1); letter-spacing: 0.05em; } 50% { opacity: 1; transform: scale(1.02); letter-spacing: 0.08em; text-shadow: 0 0 30px rgba(255,255,255,0.3); } }
-            
-            /* 跳过按钮 */
-            .skip-button { position: absolute; top: 2rem; right: 2rem; z-index: 60; padding: 0.5rem 1.5rem; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 9999px; color: rgba(255, 255, 255, 0.7); font-size: 0.875rem; transition: all 0.3s ease; backdrop-filter: blur(4px); cursor: pointer; opacity: 0; pointer-events: none; }
-            .skip-button:hover { background: rgba(255, 255, 255, 0.1); color: white; border-color: white; }
-        }
-    </style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--font);
+  line-height:1.65; -webkit-font-smoothing:antialiased; font-size:16px;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+a{color:inherit;text-decoration:none}
+
+/* ---------- 顶部导航 ---------- */
+header{
+  position:sticky;top:0;z-index:60;
+  background:var(--bg);
+  border-bottom:1px solid var(--line);
+}
+@supports (backdrop-filter: blur(1px)){
+  header{background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+}
+.nav{display:flex;align-items:center;justify-content:space-between;height:62px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:650;font-size:15px;letter-spacing:-.01em}
+.brand svg{width:22px;height:22px;flex:none}
+.ver{font-family:var(--mono);font-size:11px;color:var(--text-3);font-weight:400}
+.nav-links{display:flex;gap:26px;font-size:13.5px;color:var(--text-2)}
+.nav-links a{transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:14px}
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 17px;border-radius:9px;font-size:13.5px;font-weight:550;
+  border:1px solid transparent;transition:all .2s;cursor:pointer;white-space:nowrap;
+}
+.btn-primary{background:var(--text);color:var(--bg)}
+.btn-primary:hover{opacity:.86;transform:translateY(-1px)}
+@media (max-width:860px){.nav-links{display:none}}
+
+/* ---------- ① Hero ---------- */
+.hero{padding:88px 0 76px;position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:center}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;font-size:12px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);
+  font-weight:600;margin-bottom:22px;
+}
+.eyebrow::before{content:"";width:22px;height:1px;background:var(--text-3)}
+h1{font-size:clamp(2rem,4.4vw,3.15rem);line-height:1.18;font-weight:700;letter-spacing:-.025em;margin-bottom:22px}
+h1 .accent{color:var(--right)}
+.hero p.lead{font-size:clamp(1rem,1.6vw,1.14rem);color:var(--text-2);max-width:38em;margin-bottom:14px}
+.hero p.sub{font-size:14px;color:var(--text-3);max-width:38em;margin-bottom:30px}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+.btn-ghost{border-color:var(--line);color:var(--text-2)}
+.btn-ghost:hover{border-color:var(--text-3);color:var(--text)}
+.hero-art{display:flex;justify-content:center}
+@media (max-width:860px){
+  .hero{padding:56px 0 48px}
+  .hero-grid{grid-template-columns:1fr;gap:38px}
+  .hero-art{order:-1}
+  .hero-art svg{max-width:320px}
+}
+
+/* ---------- 通用 section ---------- */
+section{padding:72px 0;border-top:1px solid var(--line)}
+.sec-head{margin-bottom:44px;max-width:62ch}
+.sec-num{font-family:var(--mono);font-size:12px;color:var(--text-3);letter-spacing:.06em;margin-bottom:12px;display:block}
+h2{font-size:clamp(1.4rem,2.6vw,1.95rem);font-weight:680;letter-spacing:-.02em;margin-bottom:12px;line-height:1.3}
+.sec-head p{color:var(--text-2);font-size:15px}
+
+/* ---------- ② 设计哲学 ---------- */
+.philosophy{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.phil-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:26px 22px;display:flex;flex-direction:column;gap:14px;
+  transition:border-color .25s,transform .25s;
+}
+.phil-card:hover{border-color:var(--text-3);transform:translateY(-2px)}
+.phil-card.mid{background:var(--card-2)}
+.phil-icon{width:46px;height:46px}
+.phil-card h3{font-size:16px;font-weight:640;letter-spacing:-.01em}
+.phil-card .tag{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:5px;align-self:flex-start;font-weight:500}
+.tag-left{background:var(--left-soft);color:var(--left)}
+.tag-right{background:var(--right-soft);color:var(--right)}
+.tag-mid{background:var(--card-2);color:var(--text-3);border:1px solid var(--line)}
+.phil-card p{font-size:13.5px;color:var(--text-2);line-height:1.7}
+.phil-card p strong{color:var(--text);font-weight:600}
+@media (max-width:860px){.philosophy{grid-template-columns:1fr}}
+
+/* ---------- ③ 思想来源 ---------- */
+.thought{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:38px 40px;position:relative;min-height:200px;
+  display:flex;align-items:center;gap:32px;
+}
+.quote-body{flex:1;min-width:0}
+.quote-text{
+  font-size:clamp(1.05rem,2.1vw,1.4rem);line-height:1.55;font-weight:480;
+  letter-spacing:-.015em;margin-bottom:18px;transition:opacity .45s ease;
+}
+.quote-text::before{content:"\201C";color:var(--text-3)}
+.quote-text::after{content:"\201D";color:var(--text-3)}
+.quote-meta{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;transition:opacity .45s ease}
+.quote-name{font-weight:640;font-size:14.5px}
+.quote-src{font-size:12.5px;color:var(--text-3);font-family:var(--mono)}
+.quote-portrait{flex:none;width:96px;height:96px;transition:opacity .45s ease;color:var(--text-2)}
+.quote-nav{display:flex;align-items:center;gap:10px;margin-top:22px}
+.dots{display:flex;gap:7px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--line);border:none;padding:0;cursor:pointer;transition:all .25s}
+.dot.on{background:var(--text-2);width:20px;border-radius:4px}
+.arrow{
+  width:30px;height:30px;border-radius:8px;border:1px solid var(--line);
+  background:transparent;color:var(--text-2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+}
+.arrow:hover{border-color:var(--text-3);color:var(--text)}
+@media (max-width:700px){
+  .thought{flex-direction:column-reverse;padding:28px 24px;gap:20px}
+  .quote-portrait{width:64px;height:64px;align-self:flex-start}
+}
+
+/* ---------- ④ 页面 ---------- */
+.pages{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.page-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px;transition:border-color .25s,transform .25s;
+}
+.page-card:hover{border-color:var(--text-3);transform:translateY(-2px)}
+.page-top{display:flex;align-items:center;gap:12px;margin-bottom:11px}
+.page-top svg{width:30px;height:30px;flex:none}
+.page-card h3{font-size:14.5px;font-weight:630;letter-spacing:-.01em}
+.page-card p{font-size:13px;color:var(--text-2);line-height:1.65}
+.page-group{
+  grid-column:1/-1;font-family:var(--mono);font-size:11.5px;color:var(--text-3);
+  letter-spacing:.07em;text-transform:uppercase;margin:14px 0 2px;
+}
+.page-group:first-child{margin-top:0}
+@media (max-width:900px){.pages{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){.pages{grid-template-columns:1fr}}
+
+/* ---------- ⑤ 边界 ---------- */
+.donts{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.dont{display:flex;gap:14px;padding:20px 22px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius)}
+.dont-mark{
+  flex:none;width:22px;height:22px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--right-soft);color:var(--right);font-weight:700;font-size:13px;margin-top:1px;
+}
+.dont h3{font-size:14px;font-weight:620;margin-bottom:5px}
+.dont p{font-size:13px;color:var(--text-2);line-height:1.6}
+@media (max-width:700px){.donts{grid-template-columns:1fr}}
+
+/* ---------- 页脚 ---------- */
+footer{
+  border-top:1px solid var(--line);padding:34px 0 44px;
+  display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
+  font-size:12.5px;color:var(--text-3);
+}
+.foot-left{display:flex;align-items:center;gap:10px}
+.foot-left svg{width:18px;height:18px;opacity:.7}
+.foot-meta{display:flex;gap:18px;align-items:center;font-family:var(--mono);font-size:11.5px}
+
+/* ---------- 开场序列（替代视频）---------- */
+#intro{
+  position:fixed;inset:0;z-index:200;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .6s ease,visibility .6s;
+}
+#intro.gone{opacity:0;visibility:hidden;pointer-events:none}
+.intro-stage{position:relative;width:min(88vw,420px);height:220px}
+.intro-scene{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:20px;
+  opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease;
+}
+.intro-scene.on{opacity:1;transform:translateY(0)}
+.intro-scene svg{width:120px;height:120px}
+.intro-scene span{font-size:13.5px;color:var(--text-2);letter-spacing:.02em;text-align:center}
+.skip{
+  position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+  background:transparent;border:1px solid var(--line);color:var(--text-3);
+  padding:7px 18px;border-radius:999px;font-size:12.5px;cursor:pointer;
+  transition:all .2s;font-family:var(--font);
+}
+.skip:hover{border-color:var(--text-3);color:var(--text)}
+.intro-bar{position:absolute;bottom:0;left:0;height:2px;background:var(--text-3);width:0;opacity:.4}
+@media (prefers-reduced-motion:reduce){
+  #intro{display:none}
+  .intro-scene{transition:none}
+}
+
+/* ---------- 入场动画 ---------- */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+</style>
 </head>
-<body class="font-inter bg-gray-light text-dark antialiased dark:bg-dark dark:text-white">
+<body>
 
-    <div id="scroll-spacer" style="height: 150vh; width: 100%;"></div>
+<!-- ========== 开场序列：CSS 幻灯片，替代原 4.8MB 视频 ========== -->
+<div id="intro" role="presentation" aria-hidden="true">
+  <div class="intro-stage">
+    <div class="intro-scene on">
+      <svg viewBox="0 0 120 120" fill="none" stroke-linecap="round">
+        <circle cx="30" cy="60" r="19" stroke="#4A7DFF" stroke-width="2.5"/>
+        <circle cx="90" cy="60" r="19" stroke="#F0B429" stroke-width="2.5"/>
+        <line x1="49" y1="60" x2="71" y2="60" stroke="#6B7C9B" stroke-width="1.5"/>
+      </svg>
+      <span>两头重，中间轻</span>
+    </div>
+    <div class="intro-scene">
+      <svg viewBox="0 0 120 120" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 84 C36 84 44 76 56 62 C68 48 76 40 100 40" stroke="#4A7DFF" stroke-width="2.5"/>
+        <path d="M12 84 C36 84 44 76 56 62 C68 48 76 40 100 40 L100 100 L12 100 Z" fill="#4A7DFF" opacity=".1" stroke="none"/>
+      </svg>
+      <span>左侧求稳：不预测，只跟随</span>
+    </div>
+    <div class="intro-scene">
+      <svg viewBox="0 0 120 120" fill="none" stroke-linecap="round">
+        <circle cx="24" cy="88" r="2.5" fill="#6B7C9B"/><circle cx="38" cy="80" r="2.5" fill="#6B7C9B"/>
+        <circle cx="46" cy="90" r="2.5" fill="#6B7C9B"/><circle cx="58" cy="74" r="2.5" fill="#6B7C9B"/>
+        <circle cx="66" cy="86" r="2.5" fill="#6B7C9B"/><circle cx="74" cy="68" r="2.5" fill="#6B7C9B"/>
+        <circle cx="88" cy="80" r="2.5" fill="#6B7C9B"/><circle cx="96" cy="62" r="2.5" fill="#6B7C9B"/>
+        <circle cx="94" cy="34" r="11" stroke="#F0B429" stroke-width="2.5"/>
+        <circle cx="94" cy="34" r="4" fill="#F0B429"/>
+      </svg>
+      <span>右侧求凸：多数时候什么都不发生</span>
+    </div>
+    <div class="intro-scene">
+      <svg viewBox="0 0 120 120" fill="none">
+        <circle cx="60" cy="60" r="34" stroke="#94A3B8" stroke-width="2" stroke-dasharray="3 6"/>
+        <line x1="60" y1="38" x2="60" y2="60" stroke="#E8EDF7" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="60" y1="60" x2="76" y2="52" stroke="#E8EDF7" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <span>只告知位置，不给方向</span>
+    </div>
+  </div>
+  <button class="skip" id="skip">跳过</button>
+  <div class="intro-bar" id="ibar"></div>
+</div>
 
-    <div id="layer-intro">
-        <div class="absolute inset-0 overflow-hidden"><div class="fog-flow fog-1"></div><div class="fog-flow fog-2"></div></div>
-        <div class="relative z-10 text-center" id="intro-text">
-            <h1 class="breathing-text text-5xl md:text-7xl font-serif font-bold text-white mb-6 tracking-wider">
-                BARBELL Strategy
-            </h1>
-            <p class="text-xl md:text-2xl font-light tracking-[0.4em] text-secondary uppercase opacity-90">
-                Invest Dashboard
-            </p>
+<!-- ========== 导航 ========== -->
+<header>
+  <div class="wrap nav">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" fill="none">
+        <circle cx="9" cy="16" r="5" fill="#4A7DFF"/>
+        <circle cx="23" cy="16" r="6.5" fill="#F0B429"/>
+        <rect x="13" y="15.2" width="6" height="1.6" fill="#6B7C9B"/>
+      </svg>
+      <span>投资监控 Dashboard</span>
+      <span class="ver" id="ver1">v4.10.1</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#philosophy">设计哲学</a>
+      <a href="#thoughts">思想来源</a>
+      <a href="#pages">功能</a>
+      <a href="#boundary">边界</a>
+    </nav>
+    <div class="nav-right">
+      <a class="btn btn-primary" href="https://app.climbing2the.top">登录
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ========== ① Hero ========== -->
+<div class="wrap">
+  <section class="hero" style="border-top:none">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Barbell Strategy Monitor</span>
+        <h1>它不是预测市场的工具，<br>是一台<span class="accent">杠铃的监视器</span>。</h1>
+        <p class="lead">左侧放全天候的稳健配置，右侧留少量仓位给损失有限、收益数倍的机会。中间那段——追逐热门、频繁调仓、预测点位——被刻意留空。</p>
+        <p class="sub">系统只做一件事：把当前所处的位置告诉你。它不判断该不该买，也不替你下单。</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="https://app.climbing2the.top">进入系统</a>
+          <a class="btn btn-ghost" href="#philosophy">先看设计思路</a>
         </div>
-        <div class="absolute bottom-10 left-50% translate-x-[-50%] flex flex-col items-center opacity-60 animate-bounce">
-            <i class="fa fa-angle-down text-white"></i>
-            <span class="text-xs mt-2 tracking-widest text-white">SCROLL TO BEGIN</span>
+      </div>
+      <div class="hero-art">
+        <svg viewBox="0 0 340 260" width="100%" fill="none">
+          <defs>
+            <radialGradient id="gl" cx="50%" cy="50%">
+              <stop offset="0%" stop-color="#4A7DFF" stop-opacity=".42"/>
+              <stop offset="100%" stop-color="#4A7DFF" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="gr" cx="50%" cy="50%">
+              <stop offset="0%" stop-color="#F0B429" stop-opacity=".42"/>
+              <stop offset="100%" stop-color="#F0B429" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle cx="72" cy="130" r="88" fill="url(#gl)"/>
+          <circle cx="266" cy="130" r="72" fill="url(#gr)"/>
+          <line x1="118" y1="130" x2="216" y2="130" stroke="#3A4A6B" stroke-width="2" stroke-dasharray="4 5"/>
+          <circle cx="72" cy="130" r="42" stroke="#4A7DFF" stroke-width="2" opacity=".85"/>
+          <circle cx="72" cy="130" r="27" fill="#4A7DFF" opacity=".22"/>
+          <circle cx="266" cy="130" r="30" stroke="#F0B429" stroke-width="2" opacity=".85"/>
+          <circle cx="266" cy="130" r="16" fill="#F0B429" opacity=".3"/>
+          <text x="72" y="208" text-anchor="middle" fill="currentColor" opacity=".72" font-size="11.5">全天候 · 稳健</text>
+          <text x="266" y="196" text-anchor="middle" fill="currentColor" opacity=".72" font-size="11.5">凸性 · 静默等待</text>
+          <text x="167" y="120" text-anchor="middle" fill="currentColor" opacity=".4" font-size="10.5">不追逐中间</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ========== ② 设计哲学 ========== -->
+<div class="wrap">
+  <section id="philosophy">
+    <div class="sec-head reveal">
+      <span class="sec-num">01 / 设计哲学</span>
+      <h2>为什么是「两头重、中间轻」</h2>
+      <p>杠铃的核心不是分散，而是承认两种完全不同的不确定性，用两套完全不同的方法应对。</p>
+    </div>
+    <div class="philosophy">
+      <div class="phil-card reveal">
+        <svg class="phil-icon" viewBox="0 0 46 46" fill="none" stroke-linecap="round">
+          <path d="M6 34 Q14 30 20 24 T40 16" stroke="#4A7DFF" stroke-width="2.5"/>
+          <path d="M6 34 Q14 30 20 24 T40 16 L40 40 L6 40 Z" fill="#4A7DFF" opacity=".12" stroke="none"/>
+        </svg>
+        <span class="tag tag-left">左侧 · 求稳</span>
+        <h3>承认无法预测</h3>
+        <p>宏观周期、利率路径、市场情绪——这些<strong>不可预测，但可以定位</strong>。系统告诉你现在处在周期的哪一段、风险预算是松还是紧，而不是猜下一步往哪走。</p>
+      </div>
+      <div class="phil-card mid reveal">
+        <svg class="phil-icon" viewBox="0 0 46 46" fill="none" stroke-linecap="round" stroke-width="2">
+          <line x1="23" y1="8" x2="23" y2="38" stroke="#94A3B8"/>
+          <line x1="10" y1="23" x2="36" y2="23" stroke="#94A3B8" stroke-dasharray="3 4"/>
+          <circle cx="23" cy="23" r="4" fill="#6B7C9B" stroke="none"/>
+        </svg>
+        <span class="tag tag-mid">中间 · 留空</span>
+        <h3>刻意不做的事</h3>
+        <p>不追热点、不做波段、不看每日推荐。中间那一段看起来最像「投资」，实际上是<strong>交易成本与情绪损耗的来源</strong>，所以留空。</p>
+      </div>
+      <div class="phil-card reveal">
+        <svg class="phil-icon" viewBox="0 0 46 46" fill="none" stroke-linecap="round">
+          <circle cx="9" cy="36" r="2" fill="#6B7C9B"/><circle cx="17" cy="31" r="2" fill="#6B7C9B"/>
+          <circle cx="24" cy="35" r="2" fill="#6B7C9B"/><circle cx="30" cy="28" r="2" fill="#6B7C9B"/>
+          <circle cx="36" cy="22" r="2" fill="#6B7C9B"/>
+          <circle cx="35" cy="12" r="7" stroke="#F0B429" stroke-width="2.5"/>
+          <circle cx="35" cy="12" r="2.5" fill="#F0B429"/>
+        </svg>
+        <span class="tag tag-right">右侧 · 求凸</span>
+        <h3>只在极端处出手</h3>
+        <p>大多数时候什么都不发生，这是正常的。赔率不够时<strong>不动本身就是决策</strong>。只有损失有界、上行数倍的机会出现，系统才提醒你。</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ========== ③ 思想来源 ========== -->
+<div class="wrap">
+  <section id="thoughts">
+    <div class="sec-head reveal">
+      <span class="sec-num">02 / 思想来源</span>
+      <h2>这套结构不是自创的</h2>
+      <p>杠铃、周期、安全边际、非对称——每一条都有明确的出处。</p>
+    </div>
+    <div class="thought reveal">
+      <div class="quote-body">
+        <p class="quote-text" id="qt"></p>
+        <div class="quote-meta">
+          <span class="quote-name" id="qn"></span>
+          <span class="quote-src" id="qs"></span>
         </div>
-        <div class="absolute bottom-4 text-xs text-gray-500 tracking-wider">© 2025 投资监控 Dashboard. 保留所有权利。</div>
+        <div class="quote-nav">
+          <button class="arrow" id="prev" aria-label="上一条">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button class="arrow" id="next" aria-label="下一条">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+          <div class="dots" id="dots"></div>
+        </div>
+      </div>
+      <div class="quote-portrait" id="qp"></div>
     </div>
+  </section>
+</div>
 
-    <div id="layer-video">
-        <button id="skip-btn" class="skip-button">
-            跳过动画 <i class="fa fa-forward ml-2"></i>
-        </button>
-
-        <video id="main-video" class="w-full h-full object-cover opacity-60" muted playsinline loop>
-            <source src="./invest dashboard.mp4" type="video/mp4">
-        </video>
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none bg-gradient-to-t from-dark/80 via-transparent to-dark/80"></div>
+<!-- ========== ④ 页面 ========== -->
+<div class="wrap">
+  <section id="pages">
+    <div class="sec-head reveal">
+      <span class="sec-num">03 / 功能</span>
+      <h2>你会看到的七个页面</h2>
+      <p>只列当前对一般用户开放的部分。系统里另有一些管理工具，不在此介绍。</p>
     </div>
+    <div class="pages">
+      <div class="page-group reveal">左侧 · 全天候稳健</div>
 
-    <div id="layer-content">
-        <header class="fixed top-0 left-0 right-0 z-50 transition-all duration-300" id="navbar">
-            <div class="glass-effect border-b border-gray-200 dark:glass-effect-dark dark:border-dark-light/50">
-                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex justify-between items-center h-16">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <h1 class="text-xl font-bold text-primary">投资监控 Dashboard</h1>
-                            </div>
-                            <div class="hidden md:block ml-10">
-                                <nav class="flex space-x-4">
-                                    <a href="#system-overview" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">系统概览</a>
-                                    <a href="#beta-strategy" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">稳健基石 (Beta)</a>
-                                    <a href="#alpha-strategy" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">锐利锋芒 (Alpha)</a>
-                                    <a href="#features" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">系统特点</a>
-                                </nav>
-                            </div>
-                        </div>
-                        <div class="hidden md:flex items-center space-x-4">
-                            <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-light transition-colors">
-                                <i class="fa fa-moon-o text-dark-light dark:text-gray-medium text-xl" id="theme-icon"></i>
-                            </button>
-                            <div class="user-actions">
-                                <a href="https://app.climbing2the.top" target="_self" class="w-full bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                                    <i class="fa fa-sign-in"></i>登录
-                                </a>
-                            </div>
-                        </div>
-                        <div class="md:hidden">
-                            <button type="button" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white" id="mobile-menu-button">
-                                <i class="fa fa-bars text-xl"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="hidden md:hidden bg-white dark:bg-dark-light border-b border-gray-200 dark:border-dark" id="mobile-menu">
-                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                    <a href="#system-overview" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium">系统概览</a>
-                    <a href="#beta-strategy" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium">稳健基石 (Beta)</a>
-                    <a href="#alpha-strategy" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium">锐利锋芒 (Alpha)</a>
-                    <a href="#features" class="text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium">系统特点</a>
-                    <button id="mobile-theme-toggle" class="w-full flex items-center p-2 mt-2 rounded-md text-base font-medium text-dark-light hover:text-primary dark:text-gray-medium dark:hover:text-white">
-                        <i class="fa fa-moon-o mr-2" id="mobile-theme-icon"></i> 夜间模式
-                    </button>
-                    <div class="user-actions">
-                        <a href="https://app.climbing2the.top" target="_self" class="w-full bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors mt-3">
-                            <i class="fa fa-sign-in"></i>登录
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </header>
+      <div class="page-card reveal">
+        <div class="page-top">
+          <svg viewBox="0 0 30 30" fill="none" stroke="#4A7DFF" stroke-width="1.9" stroke-linecap="round">
+            <rect x="4" y="4" width="9" height="9" rx="2"/><rect x="17" y="4" width="9" height="9" rx="2"/>
+            <rect x="4" y="17" width="9" height="9" rx="2"/><rect x="17" y="17" width="9" height="9" rx="2"/>
+          </svg>
+          <h3>总览</h3>
+        </div>
+        <p>一屏看完：战略罗盘指向、左右两侧的当前状态、数据新鲜度。用来判断「现在要不要看别处」。</p>
+      </div>
 
-        <section class="pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-blue text-white">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col md:flex-row items-center">
-                    <div class="md:w-1/2 mb-10 md:mb-0">
-                        <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight text-shadow mb-4">
-                            杠铃策略投资<br>监控与分析平台
-                        </h1>
-                        <p class="text-[clamp(1rem,2vw,1.25rem)] text-white/90 mb-8 max-w-xl">
-                            融合宏观经济分析与AI驱动的市场洞察，助您构建平衡且锐利的投资组合，把握市场周期与非对称机会。
-                        </p>
-                    </div>
-                    <div class="md:w-1/2">
-                        <div class="relative">
-                            <div class="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-xl blur opacity-70"></div>
-                            <div class="relative bg-white dark:bg-dark-light rounded-xl overflow-hidden shadow-2xl">
-                                <img src="https://picsum.photos/800/600?random=1" alt="投资监控仪表盘界面" class="w-full h-auto">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
-                                    <div class="p-6">
-                                        <h3 class="text-xl font-semibold text-white">智能投资监控系统</h3>
-                                        <p class="text-white/80">实时监控市场动态，智能分析投资机会</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+      <div class="page-card reveal">
+        <div class="page-top">
+          <svg viewBox="0 0 30 30" fill="none" stroke="#4A7DFF" stroke-width="1.9" stroke-linecap="round">
+            <path d="M4 21l6-7 5 4 6-9 5 5"/><line x1="4" y1="26" x2="26" y2="26" opacity=".45"/>
+          </svg>
+          <h3>行情监控</h3>
+        </div>
+        <p>自选标的的价格、均线偏离与异动。数据新鲜度分开标注——采集时间与数据日期不是一回事。</p>
+      </div>
 
-        <section id="system-overview" class="py-16 bg-white dark:bg-dark">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-16">
-                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">系统概览</h2>
-                    <p class="text-gray-medium dark:text-gray-400 max-w-2xl mx-auto text-lg">基于杠铃投资策略的智能监控系统</p>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    <div class="bg-gray-light dark:bg-dark-light rounded-xl p-8 shadow-card card-hover border border-white/5">
-                        <div class="flex items-center mb-6">
-                            <div class="bg-primary/10 dark:bg-primary/20 p-3 rounded-lg"><i class="fa fa-shield text-primary text-2xl"></i></div>
-                            <h3 class="text-xl font-semibold ml-4 text-dark dark:text-white">稳健基石 (Beta)</h3>
-                        </div>
-                        <p class="text-dark-light dark:text-gray-300 mb-6">理解宏观环境，管理系统性风险，构建投资组合的安全垫</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4"><i class="fa fa-line-chart text-primary mb-2"></i><h4 class="font-medium text-dark dark:text-white">周期定位仪</h4></div>
-                            <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4"><i class="fa fa-dashboard text-primary mb-2"></i><h4 class="font-medium text-dark dark:text-white">风险仪表盘</h4></div>
-                            <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4"><i class="fa fa-balance-scale text-primary mb-2"></i><h4 class="font-medium text-dark dark:text-white">市场情绪钟摆</h4></div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-gray-light dark:bg-dark-light rounded-xl p-8 shadow-card card-hover border border-white/5">
-                        <div class="flex items-center mb-6">
-                            <div class="bg-secondary/10 dark:bg-secondary/20 p-3 rounded-lg"><i class="fa fa-rocket text-secondary text-2xl"></i></div>
-                            <h3 class="text-xl font-semibold ml-4 text-dark dark:text-white">锐利锋芒 (Alpha)</h3>
-                        </div>
-                        <p class="text-dark-light dark:text-gray-300 mb-6">发现非对称机会，捕捉超额收益</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4"><i class="fa fa-newspaper-o text-secondary mb-2"></i><h4 class="font-medium text-dark dark:text-white">热点追踪</h4></div>
-                            <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4"><i class="fa fa-bell text-secondary mb-2"></i><h4 class="font-medium text-dark dark:text-white">行情报警</h4></div>
-                            <div class="bg-white dark:bg-dark rounded-lg shadow-sm p-4"><i class="fa fa-bar-chart text-secondary mb-2"></i><h4 class="font-medium text-dark dark:text-white">指标聚合</h4></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+      <div class="page-card reveal">
+        <div class="page-top">
+          <svg viewBox="0 0 30 30" fill="none" stroke="#4A7DFF" stroke-width="1.9" stroke-linecap="round">
+            <circle cx="15" cy="15" r="10"/><path d="M15 9v6l4 3"/>
+          </svg>
+          <h3>风险仪表盘</h3>
+        </div>
+        <p>资产间的相关性矩阵与组合风险预算。相关性按 5 年周频计算，遇到拆分个股做复权处理。</p>
+      </div>
 
-        <section id="beta-strategy" class="py-16 bg-gray-light dark:bg-dark-light">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-16">
-                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">稳健基石 (Beta)</h2>
-                    <p class="text-gray-medium dark:text-gray-400">理解宏观环境，管理系统性风险</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-card card-hover">
-                        <div class="relative h-48"><img src="https://picsum.photos/600/400?random=2" alt="周期定位仪" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><h3 class="text-xl font-semibold text-white">周期定位仪</h3></div></div>
-                        <div class="p-6"><p class="text-dark-light dark:text-gray-300">融合美林时钟与信贷周期，对比中美宏观阶段。</p></div>
-                    </div>
-                    <div class="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-card card-hover">
-                        <div class="relative h-48"><img src="https://picsum.photos/600/400?random=3" alt="风险仪表盘" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><h3 class="text-xl font-semibold text-white">风险仪表盘</h3></div></div>
-                        <div class="p-6"><p class="text-dark-light dark:text-gray-300">全面量化并管理您的投资组合风险。</p></div>
-                    </div>
-                    <div class="bg-white dark:bg-dark rounded-xl overflow-hidden shadow-card card-hover">
-                        <div class="relative h-48"><img src="https://picsum.photos/600/400?random=4" alt="情绪钟摆" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><h3 class="text-xl font-semibold text-white">市场情绪钟摆</h3></div></div>
-                        <div class="p-6"><p class="text-dark-light dark:text-gray-300">聚合主流恐惧与贪婪指数，量化市场情绪。</p></div>
-                    </div>
-                </div>
-            </div>
-        </section>
+      <div class="page-card reveal">
+        <div class="page-top">
+          <svg viewBox="0 0 30 30" fill="none" stroke="#4A7DFF" stroke-width="1.9" stroke-linecap="round">
+            <circle cx="15" cy="15" r="10" stroke-dasharray="3 4"/>
+            <circle cx="15" cy="15" r="3.5" fill="#4A7DFF" stroke="none"/>
+            <line x1="15" y1="15" x2="22" y2="8"/>
+          </svg>
+          <h3>周期定位仪</h3>
+        </div>
+        <p>美林时钟与信贷周期的当前位置，中美分开看。给的是坐标，不是方向。</p>
+      </div>
 
-        <section id="alpha-strategy" class="py-16 bg-white dark:bg-dark">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-16">
-                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">锐利锋芒 (Alpha)</h2>
-                    <p class="text-gray-medium dark:text-gray-400">发现非对称机会，捕捉超额收益</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="bg-gray-light dark:bg-dark-light rounded-xl overflow-hidden shadow-card card-hover">
-                        <div class="relative h-48"><img src="https://picsum.photos/600/400?random=5" alt="热点" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><h3 class="text-xl font-semibold text-white">热点与叙事追踪</h3></div></div>
-                        <div class="p-6"><p class="text-dark-light dark:text-gray-300">利用AI对海量新闻进行多维度评分。</p></div>
-                    </div>
-                    <div class="bg-gray-light dark:bg-dark-light rounded-xl overflow-hidden shadow-card card-hover">
-                        <div class="relative h-48"><img src="https://picsum.photos/600/400?random=6" alt="报警" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><h3 class="text-xl font-semibold text-white">行情报警监控</h3></div></div>
-                        <div class="p-6"><p class="text-dark-light dark:text-gray-300">自定义价格与均线偏离度报警。</p></div>
-                    </div>
-                    <div class="bg-gray-light dark:bg-dark-light rounded-xl overflow-hidden shadow-card card-hover">
-                        <div class="relative h-48"><img src="https://picsum.photos/600/400?random=7" alt="指标" class="w-full h-full object-cover"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6"><h3 class="text-xl font-semibold text-white">关键指标聚合</h3></div></div>
-                        <div class="p-6"><p class="text-dark-light dark:text-gray-300">提供多维度市场温度计，辅助判断市场极端点。</p></div>
-                    </div>
-                </div>
-            </div>
-        </section>
+      <div class="page-card reveal">
+        <div class="page-top">
+          <svg viewBox="0 0 30 30" fill="none" stroke="#4A7DFF" stroke-width="1.9" stroke-linecap="round">
+            <path d="M15 4v22"/><path d="M15 4c-5 0-8 3-8 6s3 6 8 6"/><path d="M15 16c5 0 8 3 8 6s-3 6-8 6"/>
+          </svg>
+          <h3>市场情绪钟摆</h3>
+        </div>
+        <p>把恐惧贪婪、CBBI 等情绪指标压成一个刻度，看极端，不看日常波动。</p>
+      </div>
 
-        <section class="py-16 bg-gray-light dark:bg-dark-light">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-16">
-                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">实时数据分析</h2>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2 bg-white dark:bg-dark rounded-xl p-6 shadow-card border border-white/5">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-semibold text-dark dark:text-white">全球市场指数表现</h3>
-                            <div class="flex space-x-2">
-                                <button class="px-3 py-1 text-sm bg-primary text-white rounded-md">日</button>
-                                <button class="px-3 py-1 text-sm bg-gray-200 dark:bg-dark-light text-dark-light dark:text-gray-300 rounded-md">周</button>
-                            </div>
-                        </div>
-                        <div class="h-80"><canvas id="marketIndexChart"></canvas></div>
-                    </div>
-                    <div class="bg-white dark:bg-dark rounded-xl p-6 shadow-card border border-white/5">
-                        <h3 class="text-lg font-semibold text-dark dark:text-white mb-6">风险指标监控</h3>
-                        <div class="space-y-6">
-                            <div><div class="flex justify-between mb-2"><span class="text-sm font-medium text-dark dark:text-white">VIX指数</span><span class="text-sm text-warning">18.5</span></div><div class="w-full bg-gray-200 dark:bg-dark-light rounded-full h-2.5"><div class="bg-warning h-2.5 rounded-full" style="width: 58%"></div></div></div>
-                            <div><div class="flex justify-between mb-2"><span class="text-sm font-medium text-dark dark:text-white">最大回撤</span><span class="text-sm text-danger">-8.2%</span></div><div class="w-full bg-gray-200 dark:bg-dark-light rounded-full h-2.5"><div class="bg-danger h-2.5 rounded-full" style="width: 42%"></div></div></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+      <div class="page-card reveal">
+        <div class="page-top">
+          <svg viewBox="0 0 30 30" fill="none" stroke="#4A7DFF" stroke-width="1.9" stroke-linecap="round">
+            <rect x="5" y="10" width="20" height="13" rx="2.5"/><path d="M10 10V7a5 5 0 0 1 10 0v3"/>
+          </svg>
+          <h3>可转债双低</h3>
+        </div>
+        <p>转股溢价率加纯债溢价率，双低排序。下跌有债底、上涨跟正股，是左侧里带一点凸性的品种。</p>
+      </div>
 
-        <section id="features" class="py-16 bg-white dark:bg-dark">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-16">
-                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">系统特点</h2>
-                    <p class="text-gray-medium dark:text-gray-400 max-w-2xl mx-auto text-lg">我们的投资监控系统为您提供全方位的投资决策支持</p>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover border border-white/5">
-                        <div class="text-primary text-3xl mb-4"><i class="fa fa-database"></i></div>
-                        <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">多源数据整合</h3>
-                        <p class="text-dark-light dark:text-gray-300">整合全球宏观经济数据、金融市场数据、新闻资讯。</p>
-                    </div>
-                    <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover border border-white/5">
-                        <div class="text-primary text-3xl mb-4"><i class="fa fa-brain"></i></div>
-                        <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">AI驱动分析</h3>
-                        <p class="text-dark-light dark:text-gray-300">利用人工智能技术分析海量数据，识别市场模式。</p>
-                    </div>
-                    <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover border border-white/5">
-                        <div class="text-primary text-3xl mb-4"><i class="fa fa-mobile"></i></div>
-                        <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">全平台支持</h3>
-                        <p class="text-dark-light dark:text-gray-300">桌面端、平板还是手机，随时随地访问。</p>
-                    </div>
-                    <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover border border-white/5">
-                        <div class="text-primary text-3xl mb-4"><i class="fa fa-shield"></i></div>
-                        <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">安全可靠</h3>
-                        <p class="text-dark-light dark:text-gray-300">采用银行级别的安全技术保护您的投资数据。</p>
-                    </div>
-                    <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover border border-white/5">
-                        <div class="text-primary text-3xl mb-4"><i class="fa fa-chart-line"></i></div>
-                        <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">实时监控</h3>
-                        <p class="text-dark-light dark:text-gray-300">实时监控全球金融市场动态，第一时间获取变化。</p>
-                    </div>
-                    <div class="bg-gray-light dark:bg-dark-light p-6 rounded-xl shadow-sm card-hover border border-white/5">
-                        <div class="text-primary text-3xl mb-4"><i class="fa fa-cogs"></i></div>
-                        <h3 class="text-xl font-semibold mb-3 text-dark dark:text-white">自定义配置</h3>
-                        <p class="text-dark-light dark:text-gray-300">根据您的投资偏好，自定义监控指标和报警阈值。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+      <div class="page-group reveal">配置通道</div>
 
-        <section class="py-16 bg-gray-light dark:bg-dark-light">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-16">
-                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark dark:text-white mb-4">客户评价</h2>
-                    <p class="text-gray-medium dark:text-gray-400 max-w-2xl mx-auto text-lg">听听我们的客户如何评价</p>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="bg-white dark:bg-dark p-8 rounded-xl shadow-card card-hover border border-white/5">
-                        <div class="flex items-center mb-6">
-                            <img src="https://picsum.photos/100/100?random=10" alt="RobotA" class="w-12 h-12 rounded-full object-cover">
-                            <div class="ml-4"><h4 class="font-semibold text-dark dark:text-white">RobotA</h4><p class="text-gray-medium dark:text-gray-400 text-sm">资深投资者</p></div>
-                        </div>
-                        <div class="mb-4 text-warning"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></div>
-                        <p class="text-dark-light dark:text-gray-300 italic">"投资监控 Dashboard 帮助我清晰地了解市场周期和风险状况，让我的投资决策更加理性和系统化。"</p>
-                    </div>
-                    <div class="bg-white dark:bg-dark p-8 rounded-xl shadow-card card-hover border border-white/5">
-                        <div class="flex items-center mb-6">
-                            <img src="https://picsum.photos/100/100?random=11" alt="IdolB" class="w-12 h-12 rounded-full object-cover">
-                            <div class="ml-4"><h4 class="font-semibold text-dark dark:text-white">IdolB</h4><p class="text-gray-medium dark:text-gray-400 text-sm">家族办公室总监</p></div>
-                        </div>
-                        <div class="mb-4 text-warning"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star-half-o"></i></div>
-                        <p class="text-dark-light dark:text-gray-300 italic">"系统提供的宏观周期分析和风险指标监控功能非常实用，帮助我们更好地管理家族资产。"</p>
-                    </div>
-                    <div class="bg-white dark:bg-dark p-8 rounded-xl shadow-card card-hover border border-white/5">
-                        <div class="flex items-center mb-6">
-                            <img src="https://picsum.photos/100/100?random=12" alt="ManagerC" class="w-12 h-12 rounded-full object-cover">
-                            <div class="ml-4"><h4 class="font-semibold text-dark dark:text-white">ManagerC</h4><p class="text-gray-medium dark:text-gray-400 text-sm">私募基金经理</p></div>
-                        </div>
-                        <div class="mb-4 text-warning"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></div>
-                        <p class="text-dark-light dark:text-gray-300 italic">"AI驱动的热点与叙事追踪功能是我们团队的最爱，它能帮助我们提前发现市场趋势。"</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <footer class="bg-dark text-white/70 py-12 border-t border-white/10">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div>
-                        <h3 class="text-white font-bold text-lg mb-4">投资监控 Dashboard</h3>
-                        <p class="mb-4">专业的杠铃策略投资监控与分析平台，助您把握市场周期，发现投资机会。</p>
-                        <div class="flex space-x-4">
-                            <a href="#" class="text-white/70 hover:text-white transition-colors"><i class="fab fa-weibo"></i></a>
-                            <a href="#" class="text-white/70 hover:text-white transition-colors"><i class="fab fa-weixin"></i></a>
-                            <a href="#" class="text-white/70 hover:text-white transition-colors"><i class="fab fa-linkedin"></i></a>
-                            <a href="#" class="text-white/70 hover:text-white transition-colors"><i class="fab fa-twitter"></i></a>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="text-white font-semibold mb-4">产品</h4>
-                        <ul class="space-y-2">
-                            <li><a href="#" class="hover:text-white transition-colors">稳健基石 (Beta)</a></li>
-                            <li><a href="#" class="hover:text-white transition-colors">锐利锋芒 (Alpha)</a></li>
-                            <li><a href="#" class="hover:text-white transition-colors">定价方案</a></li>
-                            <li><a href="#" class="hover:text-white transition-colors">API接口</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="text-white font-semibold mb-4">资源</h4>
-                        <ul class="space-y-2">
-                            <li><a href="#" class="hover:text-white transition-colors">帮助中心</a></li>
-                            <li><a href="#" class="hover:text-white transition-colors">使用教程</a></li>
-                            <li><a href="#" class="hover:text-white transition-colors">市场洞察</a></li>
-                            <li><a href="#" class="hover:text-white transition-colors">投资学院</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 class="text-white font-semibold mb-4">公司</h4>
-                        <ul class="space-y-2">
-                            <li><a href="#" class="hover:text-white transition-colors">关于我们</a></li>
-                            <li><a href="#" class="hover:text-white transition-colors">联系我们</a></li>
-                            <li><a href="#" class="hover:text-white transition-colors">加入我们</a></li>
-                            <li><a href="#" class="hover:text-white transition-colors">服务条款</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="border-t border-white/10 mt-12 pt-8 text-center text-sm">
-                    <p>© 2025 投资监控 Dashboard. 保留所有权利。</p>
-                </div>
-            </div>
-        </footer>
+      <div class="page-card reveal">
+        <div class="page-top">
+          <svg viewBox="0 0 30 30" fill="none" stroke="#94A3B8" stroke-width="1.9" stroke-linecap="round">
+            <circle cx="15" cy="15" r="10"/><path d="M5 15h20M15 5v20" opacity=".4"/>
+          </svg>
+          <h3>场内外基金配置</h3>
+        </div>
+        <p>同一条指数，场内 ETF 和场外联接哪个买得到、贵不贵、跟踪误差多大。回答「能不能执行」。</p>
+      </div>
     </div>
+  </section>
+</div>
 
-    <script>
-        gsap.registerPlugin(ScrollTrigger);
+<!-- ========== ⑤ 边界 ========== -->
+<div class="wrap">
+  <section id="boundary">
+    <div class="sec-head reveal">
+      <span class="sec-num">04 / 边界</span>
+      <h2>它明确不做什么</h2>
+      <p>知道一个工具不做什么，比知道它能做什么更能判断它是否适合你。</p>
+    </div>
+    <div class="donts">
+      <div class="dont reveal">
+        <div class="dont-mark">×</div>
+        <div>
+          <h3>不做交易执行</h3>
+          <p>系统只呈现信息、辅助决策。下单永远发生在券商或交易所，这里没有任何下单入口，也不对接你的账户。</p>
+        </div>
+      </div>
+      <div class="dont reveal">
+        <div class="dont-mark">×</div>
+        <div>
+          <h3>不做价格预测</h3>
+          <p>周期定位告诉你「现在在哪个季节」，不告诉你「明天涨还是跌」。任何声称能预测点位的功能都不会出现在这里。</p>
+        </div>
+      </div>
+      <div class="dont reveal">
+        <div class="dont-mark">×</div>
+        <div>
+          <h3>不做全市场扫描</h3>
+          <p>不做每日推荐、不发机会清单。只有出现极端值或特定事件时才提醒，多数日子是安静的。</p>
+        </div>
+      </div>
+      <div class="dont reveal">
+        <div class="dont-mark">×</div>
+        <div>
+          <h3>不做杠杆</h3>
+          <p>右侧准入标准是「损失有限 × 收益数倍」。加了杠杆就达不到这个赔率结构，因此不进右侧。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
 
-        // --- 核心变量 ---
-        const scrollSpacer = document.getElementById('scroll-spacer');
-        const layerIntro = document.getElementById('layer-intro');
-        const layerVideo = document.getElementById('layer-video');
-        const layerContent = document.getElementById('layer-content');
-        const video = document.getElementById('main-video');
-        const skipBtn = document.getElementById('skip-btn');
+<!-- ========== 页脚 ========== -->
+<div class="wrap">
+  <footer>
+    <div class="foot-left">
+      <svg viewBox="0 0 32 32" fill="none">
+        <circle cx="9" cy="16" r="5" fill="#4A7DFF"/>
+        <circle cx="23" cy="16" r="6.5" fill="#F0B429"/>
+        <rect x="13" y="15.2" width="6" height="1.6" fill="#6B7C9B"/>
+      </svg>
+      <span>投资监控 Dashboard</span>
+    </div>
+    <div class="foot-meta">
+      <span id="ver2">v4.10.1</span>
+      <span>© <span id="year"></span></span>
+    </div>
+  </footer>
+</div>
 
-        // --- 1. 滚动逻辑：迷雾 -> 视频 ---
-        let introTl = gsap.timeline({
-            scrollTrigger: {
-                trigger: "#scroll-spacer",
-                start: "top top",
-                end: "bottom bottom",
-                scrub: 1.5,
-                onUpdate: (self) => {
-                    if (self.progress > 0.95 && document.body.style.overflowY !== "hidden") {
-                        document.body.style.overflowY = "hidden";
-                        video.play();
-                    }
-                }
-            }
-        });
+<script>
+/* ============================================================
+   1) 开场序列：4 幕 × 1.5s，末幕结束自动淡出；可随时跳过
+   ============================================================ */
+(function(){
+  var intro = document.getElementById('intro');
+  if(!intro) return;
+  var scenes = [].slice.call(document.querySelectorAll('.intro-scene'));
+  var skip = document.getElementById('skip');
+  var bar = document.getElementById('ibar');
+  var PER = 1500, TOTAL = PER * scenes.length;
+  var idx = 0, timer = null, done = false;
 
-        introTl.to(layerIntro, { opacity: 0, pointerEvents: "none", duration: 1 })
-               .to(layerVideo, { opacity: 1, duration: 1 }, "<")
-               .to(skipBtn, { opacity: 1, pointerEvents: "auto", duration: 0.5 }, ">-0.5");
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    intro.classList.add('gone');
+    return;
+  }
 
-        // --- 2. 修复闪烁的点击跳转逻辑 ---
-        skipBtn.addEventListener('click', () => {
-            ScrollTrigger.getAll().forEach(t => t.kill());
-            gsap.set(layerIntro, { opacity: 0, visibility: "hidden", display: "none" });
-            video.pause();
-            scrollSpacer.style.display = 'none';
+  function finish(){
+    if(done) return;
+    done = true;
+    clearTimeout(timer);
+    intro.classList.add('gone');
+    document.documentElement.style.overflow = '';
+  }
+  function step(){
+    if(idx >= scenes.length){ finish(); return; }
+    scenes.forEach(function(s){ s.classList.remove('on'); });
+    if(scenes[idx]) scenes[idx].classList.add('on');
+    idx++;
+    timer = setTimeout(step, PER);
+  }
 
-            let switchTl = gsap.timeline();
-            switchTl
-                .to(skipBtn, { opacity: 0, scale: 0.9, duration: 0.3 })
-                .set(layerContent, { opacity: 0, pointerEvents: "auto", display: "block" })
-                .to(layerContent, { opacity: 1, duration: 1.5, ease: "power2.inOut" })
-                .set(layerVideo, { display: "none" })
-                .add(() => {
-                    document.body.style.overflowY = "auto";
-                    window.scrollTo(0, 0);
-                    window.dispatchEvent(new Event('resize'));
-                });
-        });
+  var t0 = performance.now();
+  function tick(now){
+    if(done) return;
+    var p = Math.min((now - t0) / TOTAL, 1);
+    if(bar) bar.style.width = (p * 100) + '%';
+    if(p < 1) requestAnimationFrame(tick);
+  }
 
-        // --- 普通网页逻辑 (暗色/亮色切换 + 图表) ---
+  document.documentElement.style.overflow = 'hidden';
+  requestAnimationFrame(tick);
+  setTimeout(step, 260);
+  if(skip) skip.addEventListener('click', finish);
+  setTimeout(finish, TOTAL + 2000);   // 兜底，任何情况下不卡住
+})();
 
-        const themeToggle = document.getElementById('theme-toggle');
-        const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-        const mobileThemeIcon = document.getElementById('mobile-theme-icon');
+/* ============================================================
+   2) 思想来源轮播（每条引言均标出处）
+   ============================================================ */
+(function(){
+  var DATA = [
+    { q:"Invest in things that gain from disorder.", name:"Nassim Nicholas Taleb", src:"Antifragile, 2012", head:"taleb" },
+    { q:"You can\u2019t predict. You can prepare.", name:"Howard Marks", src:"Oaktree client memo", head:"marks" },
+    { q:"The margin of safety is always dependent on the price paid.", name:"Benjamin Graham", src:"The Intelligent Investor, 1949", head:"graham" },
+    { q:"Markets can remain irrational longer than you can remain solvent.", name:"John Maynard Keynes", src:"widely attributed", head:"keynes" },
+    { q:"He who lives by the crystal ball will eat shattered glass.", name:"Ray Dalio", src:"Principles, 2017", head:"dalio" },
+    { q:"Nothing in life is as important as you think it is, while you are thinking about it.", name:"Daniel Kahneman", src:"Thinking, Fast and Slow, 2011", head:"kahneman" }
+  ];
 
-        // 默认初始化为 Dark
-        if (!('theme' in localStorage)) {
-            document.documentElement.classList.add('dark');
-        } else {
-             if (localStorage.theme === 'dark') {
-                document.documentElement.classList.add('dark');
-             } else {
-                document.documentElement.classList.remove('dark');
-             }
-        }
-        updateThemeIcons();
+  /* 线描头像：统一 96×96 视口，只画轮廓特征，不追求写实 */
+  var HEADS = {
+    taleb:
+      '<path d="M48 24c-9 0-15 6-15 15 0 6 2 10 4 13" stroke-width="1.9"/>'+
+      '<path d="M48 24c9 0 15 6 15 15 0 6-2 10-4 13" stroke-width="1.9"/>'+
+      '<path d="M35 38c4-2 8-3 13-3s9 1 13 3" stroke-width="1.5" opacity=".8"/>'+
+      '<path d="M38 46c3-1 6-1 10-1s7 0 10 1" stroke-width="1.4" opacity=".65"/>'+
+      '<path d="M41 55c2 5 4 8 7 8s5-3 7-8" stroke-width="1.8"/>'+
+      '<path d="M36 60c3 6 7 9 12 9s9-3 12-9" stroke-width="1.3" opacity=".55"/>',
+    marks:
+      '<path d="M48 23c-10 0-16 7-16 16 0 6 2 10 4 13" stroke-width="1.9"/>'+
+      '<path d="M48 23c10 0 16 7 16 16 0 6-2 10-4 13" stroke-width="1.9"/>'+
+      '<path d="M35 37c4-2 8-3 13-3s9 1 13 3" stroke-width="1.5" opacity=".8"/>'+
+      '<rect x="35" y="42" width="10" height="7.5" rx="2.5" stroke-width="1.6"/>'+
+      '<rect x="51" y="42" width="10" height="7.5" rx="2.5" stroke-width="1.6"/>'+
+      '<line x1="45" y1="45.7" x2="51" y2="45.7" stroke-width="1.4"/>'+
+      '<path d="M42 57c2 4 4 6 6 6s4-2 6-6" stroke-width="1.6"/>',
+    graham:
+      '<path d="M48 24c-9 0-15 6-15 15 0 5 2 9 4 12" stroke-width="1.9"/>'+
+      '<path d="M48 24c9 0 15 6 15 15 0 5-2 9-4 12" stroke-width="1.9"/>'+
+      '<path d="M37 36c3-2 7-3 11-3s8 1 11 3" stroke-width="1.5" opacity=".8"/>'+
+      '<rect x="34" y="40" width="11" height="8.5" rx="3.5" stroke-width="1.6"/>'+
+      '<rect x="51" y="40" width="11" height="8.5" rx="3.5" stroke-width="1.6"/>'+
+      '<line x1="45" y1="44.2" x2="51" y2="44.2" stroke-width="1.4"/>'+
+      '<path d="M41 56c2 5 4 7 7 7s5-2 7-7" stroke-width="1.6"/>',
+    keynes:
+      '<path d="M48 23c-11 0-17 7-17 17 0 7 3 11 6 14" stroke-width="1.9"/>'+
+      '<path d="M48 23c11 0 17 7 17 17 0 7-3 11-6 14" stroke-width="1.9"/>'+
+      '<path d="M35 35c4-3 8-4 13-4s9 1 13 4" stroke-width="1.5" opacity=".8"/>'+
+      '<path d="M38 45c3-1 6-2 10-2s7 1 10 2" stroke-width="1.5" opacity=".7"/>'+
+      '<path d="M43 53c1 4 3 6 5 6s4-2 5-6" stroke-width="1.6"/>'+
+      '<path d="M36 62c4 5 8 7 12 7s8-2 12-7" stroke-width="1.3" opacity=".5"/>',
+    dalio:
+      '<path d="M48 25c-10 0-16 7-16 16 0 6 2 10 5 13" stroke-width="1.9"/>'+
+      '<path d="M48 25c10 0 16 7 16 16 0 6-2 10-5 13" stroke-width="1.9"/>'+
+      '<path d="M36 38c4-2 8-3 12-3s8 1 12 3" stroke-width="1.5" opacity=".8"/>'+
+      '<path d="M38 46c3-1 6-1 10-1s7 0 10 1" stroke-width="1.4" opacity=".65"/>'+
+      '<path d="M41 56c2 4 4 6 7 6s5-2 7-6" stroke-width="1.6"/>'+
+      '<path d="M35 61c3 5 7 8 13 8s10-3 13-8" stroke-width="1.3" opacity=".5"/>',
+    kahneman:
+      '<path d="M48 25c-9 0-15 6-15 15 0 5 2 9 4 12" stroke-width="1.9"/>'+
+      '<path d="M48 25c9 0 15 6 15 15 0 5-2 9-4 12" stroke-width="1.9"/>'+
+      '<path d="M36 37c4-2 8-2 12-2s8 0 12 2" stroke-width="1.5" opacity=".8"/>'+
+      '<path d="M38 43c3-1 6-1 10-1s7 0 10 1" stroke-width="1.4" opacity=".7"/>'+
+      '<path d="M42 57c2 4 4 6 6 6s4-2 6-6" stroke-width="1.6"/>'
+  };
 
-        function toggleTheme() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.theme = 'light';
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.theme = 'dark';
-            }
-            updateThemeIcons();
-            updateChartTheme();
-        }
+  function portrait(key){
+    return '<svg viewBox="0 0 96 96" width="100%" height="100%" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">'
+      + '<circle cx="48" cy="48" r="45" stroke-width="1.4" opacity=".22"/>'
+      + (HEADS[key] || '') + '</svg>';
+  }
 
-        function updateThemeIcons() {
-            const isDark = document.documentElement.classList.contains('dark');
-            const iconClassRemove = isDark ? 'fa-moon-o' : 'fa-sun-o';
-            const iconClassAdd = isDark ? 'fa-sun-o' : 'fa-moon-o';
-            if(themeIcon) { themeIcon.classList.remove(iconClassRemove); themeIcon.classList.add(iconClassAdd); }
-            if(mobileThemeIcon) { mobileThemeIcon.classList.remove(iconClassRemove); mobileThemeIcon.classList.add(iconClassAdd); }
-        }
+  var i = 0, timer = null;
+  var qt = document.getElementById('qt'), qn = document.getElementById('qn'),
+      qs = document.getElementById('qs'), qp = document.getElementById('qp'),
+      dots = document.getElementById('dots');
+  if(!qt) return;
 
-        if(themeToggle) themeToggle.addEventListener('click', toggleTheme);
-        if(mobileThemeToggle) mobileThemeToggle.addEventListener('click', toggleTheme);
+  DATA.forEach(function(_, k){
+    var b = document.createElement('button');
+    b.className = 'dot' + (k === 0 ? ' on' : '');
+    b.setAttribute('aria-label', '第 ' + (k + 1) + ' 条');
+    b.addEventListener('click', function(){ go(k); });
+    dots.appendChild(b);
+  });
 
-        // 移动端菜单
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        if (mobileMenuButton) mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+  function render(){
+    var d = DATA[i];
+    [qt, qn, qs, qp].forEach(function(e){ if(e) e.style.opacity = '0'; });
+    setTimeout(function(){
+      qt.textContent = d.q;
+      qn.textContent = d.name;
+      qs.textContent = d.src;
+      qp.innerHTML = portrait(d.head);
+      [qt, qn, qs, qp].forEach(function(e){ if(e) e.style.opacity = '1'; });
+      [].slice.call(dots.children).forEach(function(el, k){ el.className = 'dot' + (k === i ? ' on' : ''); });
+    }, 220);
+  }
+  function go(k){ i = (k + DATA.length) % DATA.length; render(); restart(); }
+  function restart(){ clearInterval(timer); timer = setInterval(function(){ go(i + 1); }, 6500); }
 
-        // 图表
-        let marketIndexChart;
-        window.addEventListener('load', () => {
-            const ctx = document.getElementById('marketIndexChart').getContext('2d');
-            marketIndexChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月'],
-                    datasets: [
-                        { label: '上证指数', data: [3200, 3250, 3180, 3300, 3400, 3350, 3450], borderColor: '#165DFF', backgroundColor: 'rgba(22, 93, 255, 0.1)', tension: 0.3, fill: true },
-                        { label: '标普500', data: [4100, 4200, 4150, 4300, 4400, 4500, 4600], borderColor: '#0FC6C2', backgroundColor: 'rgba(15, 198, 194, 0.1)', tension: 0.3, fill: true }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { position: 'top' } },
-                    scales: { y: { beginAtZero: false, grid: { drawBorder: false } }, x: { grid: { display: false } } }
-                }
-            });
-            updateChartTheme();
-        });
+  document.getElementById('prev').addEventListener('click', function(){ go(i - 1); });
+  document.getElementById('next').addEventListener('click', function(){ go(i + 1); });
 
-        function updateChartTheme() {
-            if (!marketIndexChart) return;
-            const isDark = document.documentElement.classList.contains('dark');
-            const textColor = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
-            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
-            marketIndexChart.options.scales.y.grid.color = gridColor;
-            marketIndexChart.options.scales.y.ticks.color = textColor;
-            marketIndexChart.options.scales.x.ticks.color = textColor;
-            marketIndexChart.options.plugins.legend.labels.color = textColor;
-            marketIndexChart.update();
-        }
+  render();
+  restart();
+})();
 
-        const navbar = document.getElementById('navbar');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) navbar.classList.add('shadow-md');
-            else navbar.classList.remove('shadow-md');
-        });
-    </script>
+/* ============================================================
+   3) 滚动入场
+   ============================================================ */
+(function(){
+  var els = [].slice.call(document.querySelectorAll('.reveal'));
+  if(!('IntersectionObserver' in window)){
+    els.forEach(function(e){ e.classList.add('in'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  }, { threshold:.12, rootMargin:'0px 0px -40px 0px' });
+  els.forEach(function(e){ io.observe(e); });
+})();
+
+/* ============================================================
+   4) 年份
+   ============================================================ */
+document.getElementById('year').textContent = new Date().getFullYear();
+</script>
 </body>
 </html>
