@@ -279,7 +279,7 @@ footer{
         <rect x="13" y="15.2" width="6" height="1.6" fill="#6B7C9B"/>
       </svg>
       <span>投资监控 Dashboard</span>
-      <span class="ver" id="ver1">v4.10.1</span>
+      <span class="ver" id="ver1"></span>
     </div>
     <nav class="nav-links">
       <a href="#philosophy">设计哲学</a>
@@ -553,7 +553,7 @@ footer{
       <span>投资监控 Dashboard</span>
     </div>
     <div class="foot-meta">
-      <span id="ver2">v4.10.1</span>
+      <span id="ver2"></span>
       <span>© <span id="year"></span></span>
     </div>
   </footer>
@@ -748,9 +748,25 @@ footer{
 })();
 
 /* ============================================================
-   4) 年份
+   4) 版本号与年份
+   —— 版本号唯一真相源是仓库根的 VERSION 文件，运行时 fetch 读取。
+      静态站没法像 Vite 那样构建期注入，所以走 fetch；
+      失败时什么都不显示，绝不硬编码（硬编码副本必然过期——
+      这正是本页上一版显示 v4.10.1 却已发到 v4.10.2 的原因）。
    ============================================================ */
-document.getElementById('year').textContent = new Date().getFullYear();
+(function(){
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  var els = [document.getElementById('ver1'), document.getElementById('ver2')];
+  fetch('VERSION', { cache: 'no-cache' })
+    .then(function(r){ return r.ok ? r.text() : ''; })
+    .then(function(t){
+      var v = (t || '').trim();
+      if(!v) return;
+      els.forEach(function(e){ if(e) e.textContent = 'v' + v; });
+    })
+    .catch(function(){ /* 读不到就不显示，不留过期值 */ });
+})();
 </script>
 </body>
 </html>
