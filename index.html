@@ -1,11 +1,28 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>投资监控 Dashboard — 杠铃策略的监视器</title>
 <meta name="description" content="一个只做告知、不做执行的杠铃策略投资监控系统：左侧全天候稳健，右侧凸性机会，中间不预测。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230B1220'/><circle cx='9' cy='16' r='5' fill='%234A7DFF'/><circle cx='23' cy='16' r='6.5' fill='%23F0B429'/><rect x='13' y='15.2' width='6' height='1.6' fill='%2394A3B8'/></svg>">
+<script>
+/* 主题初始化：必须在 CSS 之前执行，避免首屏闪色（FOUC）
+   三态：auto（跟随系统）/ light / dark
+   存储键与主站隔离，互不影响 */
+(function(){
+  try {
+    var pref = localStorage.getItem('welcome-theme') || 'auto';
+    var sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var theme = pref === 'auto' ? (sysDark ? 'dark' : 'light') : pref;
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme-pref', pref);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.setAttribute('data-theme-pref', 'auto');
+  }
+})();
+</script>
 <style>
 /* ============================================================
    投资监控 Dashboard 欢迎页
@@ -14,22 +31,25 @@
    ============================================================ */
 
 :root{
+  --bg:#F7F9FC; --bg-soft:#FFFFFF; --card:#FFFFFF; --card-2:#F2F5FA;
+  --line:#E1E7F0; --text:#14202F; --text-2:#4E5F78; --text-3:#8494AB;
+  --left:#2E5FD4; --left-soft:rgba(46,95,212,.10);
+  --right:#B57800; --right-soft:rgba(181,120,0,.10);
+  --radius:14px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  /* 头像纸底：与素描稿的 249 灰一致，深浅色下都用纸白，形成一致的"画框" */
+  --paper:#F9F9F8;
+}
+[data-theme="dark"]{
   --bg:#0B1220; --bg-soft:#111C30; --card:#131F36; --card-2:#182742;
   --line:#22314E; --text:#E8EDF7; --text-2:#9FB0CC; --text-3:#6B7C9B;
   --left:#4A7DFF; --left-soft:rgba(74,125,255,.14);
   --right:#F0B429; --right-soft:rgba(240,180,41,.13);
-  --radius:14px;
-  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC",sans-serif;
-  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --paper:#F9F9F8;
 }
-@media (prefers-color-scheme: light){
-  :root{
-    --bg:#F7F9FC; --bg-soft:#FFFFFF; --card:#FFFFFF; --card-2:#F2F5FA;
-    --line:#E1E7F0; --text:#14202F; --text-2:#4E5F78; --text-3:#8494AB;
-    --left:#2E5FD4; --left-soft:rgba(46,95,212,.10);
-    --right:#B57800; --right-soft:rgba(181,120,0,.10);
-  }
-}
+html{color-scheme:light}
+[data-theme="dark"]{color-scheme:dark}
 
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -66,6 +86,30 @@ header{
 .btn-primary{background:var(--text);color:var(--bg)}
 .btn-primary:hover{opacity:.86;transform:translateY(-1px)}
 @media (max-width:860px){.nav-links{display:none}}
+@media (max-width:520px){
+  .nav{gap:8px}
+  .brand span{font-size:13.5px;white-space:nowrap}
+  .brand .ver{display:none}
+  .theme-btn{width:32px;height:32px}
+  .nav-right .btn-primary{padding:8px 12px;font-size:12.5px}
+}
+
+/* ---------- 主题切换按钮 ---------- */
+.theme-btn{
+  width:34px;height:34px;flex:none;border-radius:9px;
+  border:1px solid var(--line);background:transparent;color:var(--text-2);
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:border-color .2s,color .2s,transform .2s;
+  position:relative;
+}
+.theme-btn:hover{border-color:var(--text-3);color:var(--text)}
+.theme-btn:active{transform:scale(.94)}
+.theme-btn .ic{width:17px;height:17px;position:absolute;opacity:0;transition:opacity .18s ease}
+/* 按当前偏好显示对应图标：auto / light / dark */
+[data-theme-pref="auto"] .theme-btn .ic-auto,
+[data-theme-pref="light"] .theme-btn .ic-light,
+[data-theme-pref="dark"] .theme-btn .ic-dark{opacity:1}
+.theme-btn:focus-visible{outline:2px solid var(--left);outline-offset:2px}
 
 /* ---------- ① Hero ---------- */
 .hero{padding:88px 0 76px;position:relative;overflow:hidden}
@@ -133,7 +177,22 @@ h2{font-size:clamp(1.4rem,2.6vw,1.95rem);font-weight:680;letter-spacing:-.02em;m
 .quote-meta{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;transition:opacity .45s ease}
 .quote-name{font-weight:640;font-size:14.5px}
 .quote-src{font-size:12.5px;color:var(--text-3);font-family:var(--mono)}
-.quote-portrait{flex:none;width:112px;height:112px;transition:opacity .45s ease;color:var(--text-2)}
+/* 中文译文：比原文小一档、颜色淡一档，作为释义而非并列主张 */
+.quote-zh{
+  font-size:clamp(.9rem,1.55vw,1.02rem);line-height:1.75;
+  color:var(--text-2);letter-spacing:.005em;margin:-10px 0 18px;
+  transition:opacity .45s ease;
+}
+.quote-portrait{
+  flex:none;width:150px;border-radius:12px;overflow:hidden;
+  transition:opacity .45s ease;background:var(--paper);
+  box-shadow:0 6px 20px rgba(0,0,0,.16);
+  border:1px solid rgba(0,0,0,.06);
+}
+.quote-portrait .p-img{display:block;width:100%;height:auto;aspect-ratio:440/550}
+@media (max-width:700px){
+  .quote-portrait{width:112px}
+}
 .quote-nav{display:flex;align-items:center;gap:10px;margin-top:22px}
 .dots{display:flex;gap:7px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--line);border:none;padding:0;cursor:pointer;transition:all .25s}
@@ -146,7 +205,7 @@ h2{font-size:clamp(1.4rem,2.6vw,1.95rem);font-weight:680;letter-spacing:-.02em;m
 .arrow:hover{border-color:var(--text-3);color:var(--text)}
 @media (max-width:700px){
   .thought{flex-direction:column-reverse;padding:28px 24px;gap:20px}
-  .quote-portrait{width:64px;height:64px;align-self:flex-start}
+  .quote-portrait{width:132px;align-self:flex-start}
 }
 
 /* ---------- ④ 页面 ---------- */
@@ -189,34 +248,42 @@ footer{
 .foot-left{display:flex;align-items:center;gap:10px}
 .foot-left svg{width:18px;height:18px;opacity:.7}
 .foot-meta{display:flex;gap:18px;align-items:center;font-family:var(--mono);font-size:11.5px}
+/* 人像出处：默认折叠，不干扰阅读，但许可要求的内容必须在页面上 */
+.credits{margin:0 0 40px;font-size:11.5px;color:var(--text-3);line-height:1.75}
+.credits summary{cursor:pointer;user-select:none;font-size:11.5px;color:var(--text-3);transition:color .2s}
+.credits summary:hover{color:var(--text-2)}
+.credits ul{margin:10px 0 8px;padding-left:18px;display:grid;gap:3px}
+.credits li{font-size:11.5px}
+.credits em{font-style:normal;color:var(--text-2)}
+.credits p{margin-top:8px;font-size:11px;opacity:.85}
 
-/* ---------- 开场序列（替代视频）---------- */
+/* ---------- 开场序列（three.js 粒子）---------- */
 #intro{
   position:fixed;inset:0;z-index:200;background:var(--bg);
   display:flex;align-items:center;justify-content:center;
-  transition:opacity .6s ease,visibility .6s;
+  transition:opacity .7s ease,visibility .7s;
 }
 #intro.gone{opacity:0;visibility:hidden;pointer-events:none}
-.intro-stage{position:relative;width:min(88vw,420px);height:220px}
-.intro-scene{
-  position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:20px;
-  opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease;
+#introCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+/* 底部字幕：淡入淡出，压在 3D 之上 */
+.intro-caption{
+  position:absolute;left:50%;bottom:12vh;transform:translateX(-50%);
+  font-size:14.5px;color:var(--text-2);letter-spacing:.06em;
+  text-align:center;white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity .8s ease;
 }
-.intro-scene.on{opacity:1;transform:translateY(0)}
-.intro-scene svg{width:120px;height:120px}
-.intro-scene span{font-size:13.5px;color:var(--text-2);letter-spacing:.02em;text-align:center}
+.intro-caption.on{opacity:1}
 .skip{
-  position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+  position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
   background:transparent;border:1px solid var(--line);color:var(--text-3);
   padding:7px 18px;border-radius:999px;font-size:12.5px;cursor:pointer;
-  transition:all .2s;font-family:var(--font);
+  transition:all .2s;font-family:var(--font);z-index:2;
 }
 .skip:hover{border-color:var(--text-3);color:var(--text)}
-.intro-bar{position:absolute;bottom:0;left:0;height:2px;background:var(--text-3);width:0;opacity:.4}
+/* 无 WebGL 时退回纯 CSS 提示 */
+.intro-fallback{display:none;font-size:14px;color:var(--text-2)}
 @media (prefers-reduced-motion:reduce){
   #intro{display:none}
-  .intro-scene{transition:none}
 }
 
 /* ---------- 入场动画 ---------- */
@@ -227,47 +294,14 @@ footer{
 </head>
 <body>
 
-<!-- ========== 开场序列：CSS 幻灯片，替代原 4.8MB 视频 ========== -->
+<!-- ========== 开场序列：three.js 粒子演化 ========== -->
 <div id="intro" role="presentation" aria-hidden="true">
-  <div class="intro-stage">
-    <div class="intro-scene on">
-      <svg viewBox="0 0 120 120" fill="none" stroke-linecap="round">
-        <circle cx="30" cy="60" r="19" stroke="#4A7DFF" stroke-width="2.5"/>
-        <circle cx="90" cy="60" r="19" stroke="#F0B429" stroke-width="2.5"/>
-        <line x1="49" y1="60" x2="71" y2="60" stroke="#6B7C9B" stroke-width="1.5"/>
-      </svg>
-      <span>两头重，中间轻</span>
-    </div>
-    <div class="intro-scene">
-      <svg viewBox="0 0 120 120" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 84 C36 84 44 76 56 62 C68 48 76 40 100 40" stroke="#4A7DFF" stroke-width="2.5"/>
-        <path d="M12 84 C36 84 44 76 56 62 C68 48 76 40 100 40 L100 100 L12 100 Z" fill="#4A7DFF" opacity=".1" stroke="none"/>
-      </svg>
-      <span>左侧求稳：不预测，只跟随</span>
-    </div>
-    <div class="intro-scene">
-      <svg viewBox="0 0 120 120" fill="none" stroke-linecap="round">
-        <circle cx="24" cy="88" r="2.5" fill="#6B7C9B"/><circle cx="38" cy="80" r="2.5" fill="#6B7C9B"/>
-        <circle cx="46" cy="90" r="2.5" fill="#6B7C9B"/><circle cx="58" cy="74" r="2.5" fill="#6B7C9B"/>
-        <circle cx="66" cy="86" r="2.5" fill="#6B7C9B"/><circle cx="74" cy="68" r="2.5" fill="#6B7C9B"/>
-        <circle cx="88" cy="80" r="2.5" fill="#6B7C9B"/><circle cx="96" cy="62" r="2.5" fill="#6B7C9B"/>
-        <circle cx="94" cy="34" r="11" stroke="#F0B429" stroke-width="2.5"/>
-        <circle cx="94" cy="34" r="4" fill="#F0B429"/>
-      </svg>
-      <span>右侧求凸：多数时候什么都不发生</span>
-    </div>
-    <div class="intro-scene">
-      <svg viewBox="0 0 120 120" fill="none">
-        <circle cx="60" cy="60" r="34" stroke="#94A3B8" stroke-width="2" stroke-dasharray="3 6"/>
-        <line x1="60" y1="38" x2="60" y2="60" stroke="#E8EDF7" stroke-width="2.5" stroke-linecap="round"/>
-        <line x1="60" y1="60" x2="76" y2="52" stroke="#E8EDF7" stroke-width="2.5" stroke-linecap="round"/>
-      </svg>
-      <span>只告知位置，不给方向</span>
-    </div>
-  </div>
+  <canvas id="introCanvas"></canvas>
+  <div class="intro-fallback" id="introFallback">两头重，中间轻</div>
+  <p class="intro-caption" id="introCap"></p>
   <button class="skip" id="skip">跳过</button>
-  <div class="intro-bar" id="ibar"></div>
 </div>
+<script src="assets/vendor/three.umd.min.js"></script>
 
 <!-- ========== 导航 ========== -->
 <header>
@@ -288,6 +322,19 @@ footer{
       <a href="#boundary">边界</a>
     </nav>
     <div class="nav-right">
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="切换主题">
+        <svg class="ic ic-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="4" width="19" height="12.5" rx="2"/>
+          <path d="M8.5 20.5h7M12 16.5v4"/>
+        </svg>
+        <svg class="ic ic-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4.2"/>
+          <path d="M12 2.2v2.4M12 19.4v2.4M2.2 12h2.4M19.4 12h2.4M5.1 5.1l1.7 1.7M17.2 17.2l1.7 1.7M18.9 5.1l-1.7 1.7M6.8 17.2l-1.7 1.7"/>
+        </svg>
+        <svg class="ic ic-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a6.9 6.9 0 0 0 10.8 10.8z"/>
+        </svg>
+      </button>
       <a class="btn btn-primary" href="https://app.climbing2the.top">登录
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
       </a>
@@ -306,7 +353,6 @@ footer{
         <p class="sub">系统只做一件事：把当前所处的位置告诉你。它不判断该不该买，也不替你下单。</p>
         <div class="hero-cta">
           <a class="btn btn-primary" href="https://app.climbing2the.top">进入系统</a>
-          <a class="btn btn-ghost" href="#philosophy">先看设计思路</a>
         </div>
       </div>
       <div class="hero-art">
@@ -392,6 +438,7 @@ footer{
     <div class="thought reveal">
       <div class="quote-body">
         <p class="quote-text" id="qt"></p>
+        <p class="quote-zh" id="qz"></p>
         <div class="quote-meta">
           <span class="quote-name" id="qn"></span>
           <span class="quote-src" id="qs"></span>
@@ -557,54 +604,230 @@ footer{
       <span>© <span id="year"></span></span>
     </div>
   </footer>
+  <!-- 人像出处：CC BY / CC BY-SA 授权要求署名，公有领域也一并标注来源 -->
+  <details class="credits">
+    <summary>人像来源与许可</summary>
+    <ul>
+      <li>Nassim Nicholas Taleb — 原照 <em>Nassim Nicholas Taleb DLD 2009-011 (cropped)</em>，作者 nrkbeta，CC BY-SA 2.0，Wikimedia Commons</li>
+      <li>Howard Marks — 原照 <em>Howard Marks 2.17.12 (cropped)</em>，作者 Kelly Writers House，CC BY 2.0，Wikimedia Commons</li>
+      <li>Benjamin Graham — 原照 <em>Benjamin Graham portrait, 23 March 1950</em>，作者不详，公有领域，Wikimedia Commons</li>
+      <li>John Maynard Keynes — 原照 <em>John Maynard Keynes 1929</em>，作者不详，公有领域，Wikimedia Commons</li>
+      <li>Ray Dalio — 原照 <em>Web Summit 2018, Forum Day 2</em>，作者 Web Summit，CC BY 2.0，Wikimedia Commons</li>
+      <li>Daniel Kahneman — 原照 <em>Daniel Kahneman (3283955327) (cropped)</em>，作者 nrkbeta，CC BY-SA 2.0，Wikimedia Commons</li>
+    </ul>
+    <p>以上原照经 AI 图生图转写为铅笔素描稿，转写结果按相同许可使用；未对人物形象做虚构改动。</p>
+  </details>
 </div>
 
 <script>
 /* ============================================================
-   1) 开场序列：4 幕 × 1.5s，末幕结束自动淡出；可随时跳过
+   1) 开场：three.js 粒子演化
+   —— 散乱粒子 → 聚成杠铃（两端重、中间轻）→ 旋转 → 散开淡出
+   约束：three.js 本地化（assets/vendor），零 CDN；
+        可点/滚/按键跳过；无 WebGL 或 reduce-motion 直接进页面
    ============================================================ */
 (function(){
   var intro = document.getElementById('intro');
   if(!intro) return;
-  var scenes = [].slice.call(document.querySelectorAll('.intro-scene'));
   var skip = document.getElementById('skip');
-  var bar = document.getElementById('ibar');
-  var PER = 1500, TOTAL = PER * scenes.length;
-  var idx = 0, timer = null, done = false;
-
-  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-    intro.classList.add('gone');
-    return;
-  }
+  var cap = document.getElementById('introCap');
+  var canvas = document.getElementById('introCanvas');
+  var fallback = document.getElementById('introFallback');
+  var done = false, raf = null;
 
   function finish(){
     if(done) return;
     done = true;
-    clearTimeout(timer);
+    if(raf) cancelAnimationFrame(raf);
     intro.classList.add('gone');
     document.documentElement.style.overflow = '';
-  }
-  function step(){
-    if(idx >= scenes.length){ finish(); return; }
-    scenes.forEach(function(s){ s.classList.remove('on'); });
-    if(scenes[idx]) scenes[idx].classList.add('on');
-    idx++;
-    timer = setTimeout(step, PER);
+    setTimeout(function(){ intro.style.display = 'none'; }, 800);
   }
 
-  var t0 = performance.now();
-  function tick(now){
-    if(done) return;
-    var p = Math.min((now - t0) / TOTAL, 1);
-    if(bar) bar.style.width = (p * 100) + '%';
-    if(p < 1) requestAnimationFrame(tick);
+  // reduce-motion：直接跳过，不初始化 WebGL
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){ finish(); return; }
+
+  var hasWebGL = (function(){
+    try {
+      var c = document.createElement('canvas');
+      return !!(window.WebGLRenderingContext &&
+        (c.getContext('webgl') || c.getContext('experimental-webgl')));
+    } catch(e){ return false; }
+  })();
+
+  // three.js 未加载（网络/本地缺失）时的降级
+  function degrade(){
+    if(canvas) canvas.style.display = 'none';
+    if(fallback) fallback.style.display = 'block';
+    if(cap){ cap.textContent = '两头重，中间轻'; cap.classList.add('on'); }
+    setTimeout(finish, 2400);
   }
 
+  if(!hasWebGL || !window.THREE){ degrade(); return; }
+
+  var THREE = window.THREE;
   document.documentElement.style.overflow = 'hidden';
-  requestAnimationFrame(tick);
-  setTimeout(step, 260);
+
+  var isMobile = window.innerWidth < 760;
+  var COUNT = isMobile ? 1400 : 3200;
+
+  var scene = new THREE.Scene();
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.75 : 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  var camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0, 7.2);
+
+  // 目标形态：杠铃 = 两端球体 + 中间细杆
+  function barbellTarget(i){
+    var isBar = (i % 7 === 0);
+    if(isBar){
+      var t = (i % 997) / 997;
+      return new THREE.Vector3((t - 0.5) * 5.6, (Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * 0.05);
+    }
+    var side = (i % 2 === 0) ? -1 : 1;
+    var phi = Math.acos(1 - 2 * Math.random());
+    var theta = 2 * Math.PI * Math.random();
+    var r = 1.06 + Math.random() * 0.14;
+    return new THREE.Vector3(
+      side * 2.42 + r * Math.sin(phi) * Math.cos(theta),
+      r * Math.sin(phi) * Math.sin(theta),
+      r * Math.cos(phi)
+    );
+  }
+
+  var scatter = [], target = [];
+  for(var i = 0; i < COUNT; i++){
+    scatter.push(new THREE.Vector3(
+      (Math.random() - 0.5) * 24,
+      (Math.random() - 0.5) * 15,
+      (Math.random() - 0.5) * 15
+    ));
+    target.push(barbellTarget(i));
+  }
+
+  var positions = new Float32Array(COUNT * 3);
+  var colors = new Float32Array(COUNT * 3);
+  var cLeft = new THREE.Color('#4A7DFF');
+  var cRight = new THREE.Color('#F0B429');
+  var cBar = new THREE.Color('#8FA0BA');
+
+  for(var k = 0; k < COUNT; k++){
+    var p = scatter[k];
+    positions[k*3] = p.x; positions[k*3+1] = p.y; positions[k*3+2] = p.z;
+    var c = (k % 7 === 0) ? cBar : (k % 2 === 0 ? cLeft : cRight);
+    colors[k*3] = c.r; colors[k*3+1] = c.g; colors[k*3+2] = c.b;
+  }
+
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  // 圆形粒子贴图（程序生成，不引外部图片）
+  var sprite = (function(){
+    var s = document.createElement('canvas');
+    s.width = s.height = 64;
+    var ctx = s.getContext('2d');
+    var g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.35, 'rgba(255,255,255,0.5)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(s);
+  })();
+
+  var mat = new THREE.PointsMaterial({
+    size: isMobile ? 0.09 : 0.078,
+    vertexColors: true, map: sprite, transparent: true, opacity: 0,
+    depthWrite: false,
+    // 浅色背景不能用加色混合（会被冲淡成白色），按主题切换混合方式
+    blending: document.documentElement.getAttribute('data-theme') === 'dark'
+      ? THREE.AdditiveBlending : THREE.NormalBlending,
+    sizeAttenuation: true
+  });
+
+  var points = new THREE.Points(geo, mat);
+  scene.add(points);
+
+  var T_CONVERGE = 2000, T_HOLD = 1600, T_DISSOLVE = 1400;
+  var TOTAL = T_CONVERGE + T_HOLD + T_DISSOLVE;
+  var start = performance.now();
+  var shown = [false, false, false];
+  var CAPS = [
+    { at: 120,  text: '两头重，中间轻' },
+    { at: 2150, text: '左侧求稳 · 右侧求凸' },
+    { at: 3900, text: '只告知位置，不给方向' }
+  ];
+
+  function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
+  function easeInOutQuad(x){ return x < 0.5 ? 2*x*x : 1 - Math.pow(-2*x+2, 2)/2; }
+
+  var pos = geo.attributes.position;
+
+  function frame(now){
+    if(done) return;
+    var el = now - start;
+
+    var conv = Math.min(el / T_CONVERGE, 1);
+    var ce = easeOutCubic(conv);
+    var dis = Math.min(Math.max(0, el - T_CONVERGE - T_HOLD) / T_DISSOLVE, 1);
+    var de = easeInOutQuad(dis);
+
+    for(var i = 0; i < COUNT; i++){
+      var s = scatter[i], t = target[i];
+      var lag = (i % 60) / 60 * 0.16;
+      var p = Math.max(0, Math.min(1, (ce - lag) / (1 - lag)));
+      var x = s.x + (t.x - s.x) * p;
+      var y = s.y + (t.y - s.y) * p;
+      var z = s.z + (t.z - s.z) * p;
+      if(dis > 0){
+        var len = Math.hypot(t.x, t.y, t.z) || 1;
+        var spread = de * (5.5 + (i % 13) * 0.5);
+        x += (t.x / len) * spread;
+        y += (t.y / len) * spread;
+        z += (t.z / len) * spread * 0.7;
+      }
+      pos.array[i*3] = x;
+      pos.array[i*3+1] = y;
+      pos.array[i*3+2] = z;
+    }
+    pos.needsUpdate = true;
+
+    points.rotation.y = el * 0.00026;
+    points.rotation.x = Math.sin(el * 0.00038) * 0.14;
+
+    if(el < 650) mat.opacity = (el / 650) * 0.95;
+    else if(dis > 0) mat.opacity = 0.95 * (1 - de);
+    else mat.opacity = 0.95;
+
+    for(var c = 0; c < CAPS.length; c++){
+      if(!shown[c] && el >= CAPS[c].at){
+        shown[c] = true;
+        if(cap){ cap.textContent = CAPS[c].text; cap.classList.add('on'); }
+      }
+    }
+
+    renderer.render(scene, camera);
+
+    if(el < TOTAL + 650) raf = requestAnimationFrame(frame);
+    else finish();
+  }
+
+  window.addEventListener('resize', function(){
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
   if(skip) skip.addEventListener('click', finish);
-  setTimeout(finish, TOTAL + 2000);   // 兜底，任何情况下不卡住
+  intro.addEventListener('click', function(e){ if(e.target === intro) finish(); });
+  window.addEventListener('wheel', finish, { passive: true, once: true });
+  window.addEventListener('keydown', finish, { once: true });
+
+  raf = requestAnimationFrame(frame);
+  setTimeout(finish, TOTAL + 2600);
 })();
 
 /* ============================================================
@@ -612,91 +835,40 @@ footer{
    ============================================================ */
 (function(){
   var DATA = [
-    { q:"Invest in things that gain from disorder.", name:"Nassim Nicholas Taleb", src:"Antifragile, 2012", head:"taleb" },
-    { q:"You can\u2019t predict. You can prepare.", name:"Howard Marks", src:"Oaktree client memo", head:"marks" },
-    { q:"The margin of safety is always dependent on the price paid.", name:"Benjamin Graham", src:"The Intelligent Investor, 1949", head:"graham" },
-    { q:"Markets can remain irrational longer than you can remain solvent.", name:"John Maynard Keynes", src:"widely attributed", head:"keynes" },
-    { q:"He who lives by the crystal ball will eat shattered glass.", name:"Ray Dalio", src:"Principles, 2017", head:"dalio" },
-    { q:"Nothing in life is as important as you think it is, while you are thinking about it.", name:"Daniel Kahneman", src:"Thinking, Fast and Slow, 2011", head:"kahneman" }
+    { q:"Invest in things that gain from disorder.",
+      zh:"投资于那些能从混乱中受益的东西。",
+      name:"Nassim Nicholas Taleb", src:"Antifragile, 2012", head:"taleb" },
+    { q:"You can\u2019t predict. You can prepare.",
+      zh:"你无法预测，但可以准备。",
+      name:"Howard Marks", src:"Oaktree client memo", head:"marks" },
+    { q:"The margin of safety is always dependent on the price paid.",
+      zh:"安全边际永远取决于你所支付的价格。",
+      name:"Benjamin Graham", src:"The Intelligent Investor, 1949", head:"graham" },
+    { q:"Markets can remain irrational longer than you can remain solvent.",
+      zh:"市场保持非理性的时间，可能长过你保持偿付能力的时间。",
+      name:"John Maynard Keynes", src:"widely attributed", head:"keynes" },
+    { q:"He who lives by the crystal ball will eat shattered glass.",
+      zh:"靠水晶球过活的人，终将吃下碎玻璃。",
+      name:"Ray Dalio", src:"Principles, 2017", head:"dalio" },
+    { q:"Nothing in life is as important as you think it is, while you are thinking about it.",
+      zh:"生活中没有哪件事，有你在想它时以为的那么重要。",
+      name:"Daniel Kahneman", src:"Thinking, Fast and Slow, 2011", head:"kahneman" }
   ];
 
-  /* 线描头像：统一底稿（头/耳/颈/肩）+ 个人标志特征
-     —— 只画能区分的部分：Taleb 的光头大胡子、Marks 的方框镜与领带、
-        Graham 的圆框镜与领结、Keynes 的分头与八字胡、Dalio 的短发硬领、
-        Kahneman 的白鬓角与细圆镜 */
-  var BASE =
-    '<ellipse cx="48" cy="43" rx="19" ry="23" stroke-width="1.7"/>'+
-    '<path d="M29 41c-3 0-4.5 2-4.5 5.5S28 52 29 52" stroke-width="1.4"/>'+
-    '<path d="M67 41c3 0 4.5 2 4.5 5.5S68 52 67 52" stroke-width="1.4"/>'+
-    '<path d="M42 65v6M54 65v6" stroke-width="1.5"/>'+
-    '<path d="M31 85c3-6 9-9 17-9s14 3 17 9" stroke-width="1.7"/>';
-
-  var HEADS = {
-    // 光头 + 浓密短须（他的标志）
-    taleb: BASE +
-      '<path d="M39 35c2.5-1.5 5-1.5 7 0" stroke-width="1.9"/>'+
-      '<path d="M50 35c2.5-1.5 5-1.5 7 0" stroke-width="1.9"/>'+
-      '<circle cx="42.5" cy="39.5" r="1.5" fill="currentColor" stroke="none"/>'+
-      '<circle cx="53.5" cy="39.5" r="1.5" fill="currentColor" stroke="none"/>'+
-      '<path d="M48 41v5h3" stroke-width="1.4"/>'+
-      '<path d="M35 49c0 11 5.5 17 13 17s13-6 13-17" stroke-width="1.8"/>'+
-      '<path d="M43 56c2 1.6 8 1.6 10 0" stroke-width="1.6"/>',
-    // 后梳短发 + 方框眼镜 + 领带
-    marks: BASE +
-      '<path d="M32 33c2-7 7.5-11 16-11s14 4 16 11" stroke-width="1.7"/>'+
-      '<rect x="35" y="36" width="11" height="8" rx="2" stroke-width="1.6"/>'+
-      '<rect x="50" y="36" width="11" height="8" rx="2" stroke-width="1.6"/>'+
-      '<path d="M46 40h4" stroke-width="1.4"/>'+
-      '<path d="M44 57c2 1.8 6 1.8 8 0" stroke-width="1.6"/>'+
-      '<path d="M44 70l4 5 4-5" stroke-width="1.5"/>'+
-      '<path d="M48 75v9" stroke-width="1.5"/>',
-    // 圆框眼镜 + 领结（更老派的一代）
-    graham: BASE +
-      '<path d="M31 34c3-8 9-12 17-12s14 4 17 12" stroke-width="1.7"/>'+
-      '<circle cx="41" cy="40" r="6" stroke-width="1.6"/>'+
-      '<circle cx="55" cy="40" r="6" stroke-width="1.6"/>'+
-      '<path d="M47 40h2" stroke-width="1.4"/>'+
-      '<path d="M44 58c2 1.8 6 1.8 8 0" stroke-width="1.6"/>'+
-      '<path d="M40 78l8 5 8-5-8-4z" stroke-width="1.5"/>',
-    // 分头 + 八字胡（英国绅士）
-    keynes: BASE +
-      '<path d="M30 35c4-9 10-13 18-13s14 4 18 13" stroke-width="1.7"/>'+
-      '<path d="M48 22v9" stroke-width="1.3" opacity=".65"/>'+
-      '<circle cx="42.5" cy="40" r="1.5" fill="currentColor" stroke="none"/>'+
-      '<circle cx="53.5" cy="40" r="1.5" fill="currentColor" stroke="none"/>'+
-      '<path d="M48 41v5" stroke-width="1.4"/>'+
-      '<path d="M40 53c3-2.5 6-2.5 8 0M48 53c2-2.5 5-2.5 8 0" stroke-width="1.9"/>'+
-      '<path d="M44 62c2 1.5 6 1.5 8 0" stroke-width="1.5"/>',
-    // 短硬发 + 硬领衬衫
-    dalio: BASE +
-      '<path d="M31 33c3-8 9-12 17-12s14 4 17 12" stroke-width="2"/>'+
-      '<path d="M33 30l3 3M40 26l1.5 3.5M48 24v3.5M56 26l-1.5 3.5M63 30l-3 3" stroke-width="1.3" opacity=".6"/>'+
-      '<circle cx="42.5" cy="40" r="1.5" fill="currentColor" stroke="none"/>'+
-      '<circle cx="53.5" cy="40" r="1.5" fill="currentColor" stroke="none"/>'+
-      '<path d="M48 41v5h2.5" stroke-width="1.4"/>'+
-      '<path d="M43 58c2.5 2 7.5 2 10 0" stroke-width="1.7"/>'+
-      '<path d="M40 72l8 4 8-4" stroke-width="1.5"/>'+
-      '<path d="M48 76v8" stroke-width="1.5"/>',
-    // 白鬓角 + 细圆镜（心理学家）
-    kahneman: BASE +
-      '<path d="M32 34c2-8 7.5-12 16-12s14 4 16 12" stroke-width="1.5" opacity=".75"/>'+
-      '<path d="M33 44c-2 3-2 7 0 10" stroke-width="2" opacity=".5"/>'+
-      '<path d="M63 44c2 3 2 7 0 10" stroke-width="2" opacity=".5"/>'+
-      '<circle cx="41" cy="41" r="5.5" stroke-width="1.4"/>'+
-      '<circle cx="55" cy="41" r="5.5" stroke-width="1.4"/>'+
-      '<path d="M46.5 41h3" stroke-width="1.3"/>'+
-      '<path d="M44 58c2 1.8 6 1.8 8 0" stroke-width="1.6"/>'
-  };
+  /* 头像：真实照片的铅笔素描稿（AI 图生图转写，已统一到同一头高基准）
+     源照片均为 Wikimedia Commons 的公有领域或 CC 授权作品，出处见页脚「人像来源」 */
+  var PORTRAIT_SRC = 'assets/portraits-final/';
 
   function portrait(key){
-    return '<svg viewBox="0 0 96 96" width="100%" height="100%" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">'
-      + '<circle cx="48" cy="48" r="45" stroke-width="1.4" opacity=".22"/>'
-      + (HEADS[key] || '') + '</svg>';
+    var src = PORTRAIT_SRC + key + '.webp';
+    return '<img class="p-img" src="' + src + '" alt="" width="440" height="550" '
+      + 'decoding="async" loading="lazy">';
   }
 
   var i = 0, timer = null;
   var qt = document.getElementById('qt'), qn = document.getElementById('qn'),
       qs = document.getElementById('qs'), qp = document.getElementById('qp'),
+      qz = document.getElementById('qz'),
       dots = document.getElementById('dots');
   if(!qt) return;
 
@@ -710,13 +882,14 @@ footer{
 
   function render(){
     var d = DATA[i];
-    [qt, qn, qs, qp].forEach(function(e){ if(e) e.style.opacity = '0'; });
+    [qt, qn, qs, qp, qz].forEach(function(e){ if(e) e.style.opacity = '0'; });
     setTimeout(function(){
       qt.textContent = d.q;
+      if(qz) qz.textContent = d.zh || '';
       qn.textContent = d.name;
       qs.textContent = d.src;
       qp.innerHTML = portrait(d.head);
-      [qt, qn, qs, qp].forEach(function(e){ if(e) e.style.opacity = '1'; });
+      [qt, qn, qs, qp, qz].forEach(function(e){ if(e) e.style.opacity = '1'; });
       [].slice.call(dots.children).forEach(function(el, k){ el.className = 'dot' + (k === i ? ' on' : ''); });
     }, 220);
   }
@@ -748,7 +921,50 @@ footer{
 })();
 
 /* ============================================================
-   4) 版本号与年份
+   5) 主题切换：auto（跟随系统）/ light / dark 三态
+   ============================================================ */
+(function(){
+  var root = document.documentElement;
+  var btn = document.getElementById('themeBtn');
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  var ORDER = ['auto', 'light', 'dark'];
+  var LABEL = { auto: '跟随系统', light: '浅色', dark: '深色' };
+
+  function currentPref(){
+    return root.getAttribute('data-theme-pref') || 'auto';
+  }
+  function apply(pref, persist){
+    var theme = pref === 'auto' ? (mq.matches ? 'dark' : 'light') : pref;
+    root.setAttribute('data-theme', theme);
+    root.setAttribute('data-theme-pref', pref);
+    if(persist){
+      try { localStorage.setItem('welcome-theme', pref); } catch(e){}
+    }
+    if(btn){
+      btn.setAttribute('aria-label', '切换主题（当前：' + LABEL[pref] + '）');
+      btn.setAttribute('title', '主题：' + LABEL[pref]);
+    }
+  }
+
+  if(btn){
+    btn.addEventListener('click', function(){
+      var i = ORDER.indexOf(currentPref());
+      apply(ORDER[(i + 1) % ORDER.length], true);
+    });
+  }
+
+  // 系统主题变化：仅在 auto 态跟随
+  var onSysChange = function(){
+    if(currentPref() === 'auto') apply('auto', false);
+  };
+  if(mq.addEventListener) mq.addEventListener('change', onSysChange);
+  else if(mq.addListener) mq.addListener(onSysChange);
+
+  apply(currentPref(), false);
+})();
+
+/* ============================================================
+   6) 版本号与年份
    —— 版本号唯一真相源是仓库根的 VERSION 文件，运行时 fetch 读取。
       静态站没法像 Vite 那样构建期注入，所以走 fetch；
       失败时什么都不显示，绝不硬编码（硬编码副本必然过期——

@@ -1,2 +1,5 @@
-.DS_Store
-node_modules/
+# 原始素材与中间产物留在本地，不发布
+assets/src-portraits/
+assets/src-portraits-v2/
+assets/portraits-gen/
+assets/portraits/
