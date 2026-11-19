@@ -112,27 +112,30 @@ header{
 .theme-btn:focus-visible{outline:2px solid var(--left);outline-offset:2px}
 
 /* ---------- ① Hero ---------- */
-.hero{padding:88px 0 76px;position:relative;overflow:hidden}
-.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:center}
 .eyebrow{
   display:inline-flex;align-items:center;gap:8px;font-size:12px;
   letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);
   font-weight:600;margin-bottom:22px;
 }
 .eyebrow::before{content:"";width:22px;height:1px;background:var(--text-3)}
-h1{font-size:clamp(2rem,4.4vw,3.15rem);line-height:1.18;font-weight:700;letter-spacing:-.025em;margin-bottom:22px}
+h1{font-size:clamp(1.85rem,3.6vw,2.72rem);line-height:1.2;font-weight:700;letter-spacing:-.025em;margin-bottom:22px}
+@media (min-width:861px){
+  /* 桌面限定：标题第一行必须放得进 540px 左右，否则会断成三行 */
+  h1{font-size:clamp(1.75rem,2.85vw,2.42rem)}
+}
 h1 .accent{color:var(--right)}
 .hero p.lead{font-size:clamp(1rem,1.6vw,1.14rem);color:var(--text-2);max-width:38em;margin-bottom:14px}
 .hero p.sub{font-size:14px;color:var(--text-3);max-width:38em;margin-bottom:30px}
 .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
 .btn-ghost{border-color:var(--line);color:var(--text-2)}
 .btn-ghost:hover{border-color:var(--text-3);color:var(--text)}
-.hero-art{display:flex;justify-content:center}
-@media (max-width:860px){
-  .hero{padding:56px 0 48px}
-  .hero-grid{grid-template-columns:1fr;gap:38px}
-  .hero-art{order:-1}
-  .hero-art svg{max-width:320px}
+/* 桌面上文案占左半，动画在右半展开 */
+.hero-copy{max-width:62ch}
+@media (min-width:861px){
+  /* 560px 是标题"它不是预测市场的工具，"一行放得下的最小宽度 */
+  .hero-copy{max-width:min(52%,560px)}
+  .hero p.lead{max-width:30em}
+  .hero p.sub{max-width:30em}
 }
 
 /* ---------- 通用 section ---------- */
@@ -257,34 +260,46 @@ footer{
 .credits em{font-style:normal;color:var(--text-2)}
 .credits p{margin-top:8px;font-size:11px;opacity:.85}
 
-/* ---------- 开场序列（three.js 粒子）---------- */
-#intro{
-  position:fixed;inset:0;z-index:200;background:var(--bg);
-  display:flex;align-items:center;justify-content:center;
-  transition:opacity .7s ease,visibility .7s;
+/* ---------- Hero 内的 three.js 循环动画 ---------- */
+.hero{
+  position:relative;overflow:hidden;
+  padding:0;border-top:none;
+  min-height:clamp(560px,82vh,760px);
+  display:flex;align-items:center;
 }
-#intro.gone{opacity:0;visibility:hidden;pointer-events:none}
-#introCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-/* 底部字幕：淡入淡出，压在 3D 之上 */
-.intro-caption{
-  position:absolute;left:50%;bottom:12vh;transform:translateX(-50%);
-  font-size:14.5px;color:var(--text-2);letter-spacing:.06em;
-  text-align:center;white-space:nowrap;pointer-events:none;
-  opacity:0;transition:opacity .8s ease;
+#heroCanvas{
+  position:absolute;inset:0;width:100%;height:100%;
+  display:block;z-index:0;pointer-events:none;
 }
-.intro-caption.on{opacity:1}
-.skip{
-  position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
-  background:transparent;border:1px solid var(--line);color:var(--text-3);
-  padding:7px 18px;border-radius:999px;font-size:12.5px;cursor:pointer;
-  transition:all .2s;font-family:var(--font);z-index:2;
+@media (max-width:860px){
+  /* 移动端 canvas 取近正方形，球体才能成正圆（宽扁画布必然压扁结构） */
+  #heroCanvas{top:auto;bottom:0;height:min(100vw, 420px)}
 }
-.skip:hover{border-color:var(--text-3);color:var(--text)}
-/* 无 WebGL 时退回纯 CSS 提示 */
-.intro-fallback{display:none;font-size:14px;color:var(--text-2)}
-@media (prefers-reduced-motion:reduce){
-  #intro{display:none}
+/* 左侧压一层渐变，保证文字在粒子上依然清晰 */
+.hero::after{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,
+    var(--bg) 0%, var(--bg) 34%,
+    color-mix(in srgb,var(--bg) 78%,transparent) 48%,
+    transparent 64%);
 }
+@media (max-width:860px){
+  /* 移动端文字占上半，动画在下半；遮罩从上到下由实到透，保证文字区完全不透 */
+  .hero::after{
+    background:linear-gradient(180deg,
+      var(--bg) 0%,
+      var(--bg) 42%,
+      color-mix(in srgb,var(--bg) 70%,transparent) 56%,
+      transparent 72%);
+  }
+  .hero{
+    min-height:auto;
+    padding:44px 0 calc(min(100vw, 420px) - 40px);
+    align-items:flex-start;
+  }
+}
+.hero .wrap{position:relative;z-index:2;width:100%}
+.hero-canvas-fallback{display:none}
 
 /* ---------- 入场动画 ---------- */
 .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
@@ -295,12 +310,6 @@ footer{
 <body>
 
 <!-- ========== 开场序列：three.js 粒子演化 ========== -->
-<div id="intro" role="presentation" aria-hidden="true">
-  <canvas id="introCanvas"></canvas>
-  <div class="intro-fallback" id="introFallback">两头重，中间轻</div>
-  <p class="intro-caption" id="introCap"></p>
-  <button class="skip" id="skip">跳过</button>
-</div>
 <script src="assets/vendor/three.umd.min.js"></script>
 
 <!-- ========== 导航 ========== -->
@@ -342,46 +351,22 @@ footer{
   </div>
 </header>
 
-<!-- ========== ① Hero ========== -->
-<div class="wrap">
-  <section class="hero" style="border-top:none">
-    <div class="hero-grid">
-      <div>
-        <span class="eyebrow">Barbell Strategy Monitor</span>
-        <h1>它不是预测市场的工具，<br>是一台<span class="accent">杠铃的监视器</span>。</h1>
-        <p class="lead">左侧放全天候的稳健配置，右侧留少量仓位给损失有限、收益数倍的机会。中间那段——追逐热门、频繁调仓、预测点位——被刻意留空。</p>
-        <p class="sub">系统只做一件事：把当前所处的位置告诉你。它不判断该不该买，也不替你下单。</p>
-        <div class="hero-cta">
-          <a class="btn btn-primary" href="https://app.climbing2the.top">进入系统</a>
-        </div>
-      </div>
-      <div class="hero-art">
-        <svg viewBox="0 0 340 260" width="100%" fill="none">
-          <defs>
-            <radialGradient id="gl" cx="50%" cy="50%">
-              <stop offset="0%" stop-color="#4A7DFF" stop-opacity=".42"/>
-              <stop offset="100%" stop-color="#4A7DFF" stop-opacity="0"/>
-            </radialGradient>
-            <radialGradient id="gr" cx="50%" cy="50%">
-              <stop offset="0%" stop-color="#F0B429" stop-opacity=".42"/>
-              <stop offset="100%" stop-color="#F0B429" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
-          <circle cx="72" cy="130" r="88" fill="url(#gl)"/>
-          <circle cx="266" cy="130" r="72" fill="url(#gr)"/>
-          <line x1="118" y1="130" x2="216" y2="130" stroke="#3A4A6B" stroke-width="2" stroke-dasharray="4 5"/>
-          <circle cx="72" cy="130" r="42" stroke="#4A7DFF" stroke-width="2" opacity=".85"/>
-          <circle cx="72" cy="130" r="27" fill="#4A7DFF" opacity=".22"/>
-          <circle cx="266" cy="130" r="30" stroke="#F0B429" stroke-width="2" opacity=".85"/>
-          <circle cx="266" cy="130" r="16" fill="#F0B429" opacity=".3"/>
-          <text x="72" y="208" text-anchor="middle" fill="currentColor" opacity=".72" font-size="11.5">全天候 · 稳健</text>
-          <text x="266" y="196" text-anchor="middle" fill="currentColor" opacity=".72" font-size="11.5">凸性 · 静默等待</text>
-          <text x="167" y="120" text-anchor="middle" fill="currentColor" opacity=".4" font-size="10.5">不追逐中间</text>
-        </svg>
+<!-- ========== ① Hero：three.js 循环动画 ========== -->
+<section class="hero" id="hero">
+  <canvas id="heroCanvas" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="hero-copy">
+      <span class="eyebrow">Barbell Strategy Monitor</span>
+      <h1>它不是预测市场的工具，<br>是一台<span class="accent">杠铃的监视器</span>。</h1>
+      <p class="lead">左侧放全天候的稳健配置，右侧留少量仓位给损失有限、收益数倍的机会。中间那段——追逐热门、频繁调仓、预测点位——被刻意留空。</p>
+      <p class="sub">系统只做一件事：把当前所处的位置告诉你。它不判断该不该买，也不替你下单。</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="https://app.climbing2the.top">进入系统</a>
       </div>
     </div>
-  </section>
-</div>
+  </div>
+</section>
+<script src="assets/vendor/three.umd.min.js"></script>
 
 <!-- ========== ② 设计哲学 ========== -->
 <div class="wrap">
@@ -621,31 +606,19 @@ footer{
 
 <script>
 /* ============================================================
-   1) 开场：three.js 粒子演化
-   —— 散乱粒子 → 聚成杠铃（两端重、中间轻）→ 旋转 → 散开淡出
-   约束：three.js 本地化（assets/vendor），零 CDN；
-        可点/滚/按键跳过；无 WebGL 或 reduce-motion 直接进页面
+   1) Hero 循环动画：three.js 粒子演化
+   —— 散乱星尘 → 聚成杠铃（两端重、中间轻）→ 缓慢悬浮呼吸 → 散开 → 循环
+   质感要点：
+     · 自定义 ShaderMaterial：每颗粒子独立尺寸 + 圆形柔化 + 深度衰减
+     · 双层：主体结构粒子（大、亮）+ 环境尘埃（小、暗、慢速漂移）
+     · 缓动：聚合成形用 easeOutExpo，散开用 easeInOutSine，节奏有呼吸感
+     · 主题自适应：深色加色发光，浅色正常混合
+   约束：three.js 本地化；离屏暂停；reduce-motion 只画一帧静态帧
    ============================================================ */
 (function(){
-  var intro = document.getElementById('intro');
-  if(!intro) return;
-  var skip = document.getElementById('skip');
-  var cap = document.getElementById('introCap');
-  var canvas = document.getElementById('introCanvas');
-  var fallback = document.getElementById('introFallback');
-  var done = false, raf = null;
-
-  function finish(){
-    if(done) return;
-    done = true;
-    if(raf) cancelAnimationFrame(raf);
-    intro.classList.add('gone');
-    document.documentElement.style.overflow = '';
-    setTimeout(function(){ intro.style.display = 'none'; }, 800);
-  }
-
-  // reduce-motion：直接跳过，不初始化 WebGL
-  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){ finish(); return; }
+  var canvas = document.getElementById('heroCanvas');
+  var hero = document.getElementById('hero');
+  if(!canvas || !hero) return;
 
   var hasWebGL = (function(){
     try {
@@ -655,179 +628,463 @@ footer{
     } catch(e){ return false; }
   })();
 
-  // three.js 未加载（网络/本地缺失）时的降级
-  function degrade(){
-    if(canvas) canvas.style.display = 'none';
-    if(fallback) fallback.style.display = 'block';
-    if(cap){ cap.textContent = '两头重，中间轻'; cap.classList.add('on'); }
-    setTimeout(finish, 2400);
+  if(!hasWebGL || !window.THREE){
+    // 无 WebGL：留一层极淡的径向渐变，不至于空白
+    hero.style.background =
+      'radial-gradient(ellipse 60% 70% at 72% 50%, var(--right-soft), transparent 70%)';
+    return;
   }
 
-  if(!hasWebGL || !window.THREE){ degrade(); return; }
-
   var THREE = window.THREE;
-  document.documentElement.style.overflow = 'hidden';
-
-  var isMobile = window.innerWidth < 760;
-  var COUNT = isMobile ? 1400 : 3200;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isDark = function(){
+    return document.documentElement.getAttribute('data-theme') === 'dark';
+  };
 
   var scene = new THREE.Scene();
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  var isMobile = window.innerWidth < 760;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.75 : 2));
-  renderer.setSize(window.innerWidth, window.innerHeight);
 
-  var camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(0, 0, 7.2);
+  // 正交相机：球体在任意宽高比下都是正圆，不会被透视拉扁
+  var VIEW_H = 7.4;                       // 纵向可视高度（世界单位）
+  var camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+  camera.position.set(0, 0, 12);
 
-  // 目标形态：杠铃 = 两端球体 + 中间细杆
-  function barbellTarget(i){
-    var isBar = (i % 7 === 0);
-    if(isBar){
-      var t = (i % 997) / 997;
-      return new THREE.Vector3((t - 0.5) * 5.6, (Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * 0.05);
+  // ---------------- 几何：杠铃骨架 ----------------
+  var N_MAIN = isMobile ? 6000 : 16000;   // 主体结构粒子（密度决定质感）
+  var N_DUST = isMobile ? 1200 : 3000;    // 环境尘埃
+
+  // 主结构：两端球体 + 中间横杆，比例上"两头重"
+  function barbellPoint(idx){
+    var band = idx % 100;
+    if(band < 16){
+      // 横杆：沿 x 轴，中间细、两端略粗（视觉上强化"中间轻"）
+      var t = (idx * 0.6180339887) % 1;
+      // 杆只在两球之间（球心 ±2.55，球半径 1.1），不能穿进球体
+      var taper = 0.30 + 0.70 * Math.pow(Math.abs(t - 0.5) * 2, 2.0);
+      var rad = 0.040 + 0.075 * taper;
+      var ang = Math.random() * Math.PI * 2;
+      var rr = Math.sqrt(Math.random()) * rad;
+      return {
+        x: (t - 0.5) * 3.0,      // 跨度 3.0，止于球面内侧（球面在 ±1.53）
+        y: Math.cos(ang) * rr,
+        z: Math.sin(ang) * rr,
+        kind: 2
+      };
     }
-    var side = (i % 2 === 0) ? -1 : 1;
-    var phi = Math.acos(1 - 2 * Math.random());
-    var theta = 2 * Math.PI * Math.random();
-    var r = 1.06 + Math.random() * 0.14;
-    return new THREE.Vector3(
-      side * 2.42 + r * Math.sin(phi) * Math.cos(theta),
-      r * Math.sin(phi) * Math.sin(theta),
-      r * Math.cos(phi)
-    );
+    // 两端球体：外壳 + 内层稀疏填充（有核才像球，不只是一层网）
+    var side = (idx % 3 === 0) ? -1 : 1;
+    var u = Math.random(), v = Math.random();
+    var theta = 2 * Math.PI * u;
+    var phi = Math.acos(2 * v - 1);
+    var shell = Math.random();
+    var r;
+    if(shell > 0.62){
+      // 外壳：贴着球面，形成清晰轮廓
+      r = 1.02 + Math.random() * 0.09;
+    } else if(shell > 0.18){
+      // 内层：体积感
+      r = 0.55 + Math.random() * 0.42;
+    } else {
+      // 核心：极少量，聚在中心附近，产生"密度重心"
+      r = Math.random() * 0.30;
+    }
+    var cx = side * 2.62;
+    return {
+      x: cx + r * Math.sin(phi) * Math.cos(theta),
+      y: r * Math.sin(phi) * Math.sin(theta),
+      z: r * Math.cos(phi),
+      kind: side < 0 ? 0 : 1
+    };
   }
 
-  var scatter = [], target = [];
-  for(var i = 0; i < COUNT; i++){
-    scatter.push(new THREE.Vector3(
-      (Math.random() - 0.5) * 24,
-      (Math.random() - 0.5) * 15,
-      (Math.random() - 0.5) * 15
+  var main = { from: [], to: [], kind: [], size: [], phase: [] };
+  for(var i = 0; i < N_MAIN; i++){
+    var p = barbellPoint(i);
+    main.to.push(new THREE.Vector3(p.x, p.y, p.z));
+    main.kind.push(p.kind);
+    main.size.push(0.58 + Math.random() * 0.62);
+    main.phase.push(Math.random() * Math.PI * 2);
+    // 起点：从球体外围的球壳上散入（贴着最终位置附近，避免插值途中飘太远）
+    var ax = 0, ay = 0, az = 0;
+    if(p.kind === 2){
+      // 杆的点从杆外侧一点点开始
+      ax = p.x * 1.35 + (Math.random() - 0.5) * 1.8;
+      ay = (Math.random() - 0.5) * 3.2;
+      az = (Math.random() - 0.5) * 2.6;
+    } else {
+      // 球的点从半径 2.2~3.4 的壳上收进来
+      var rr0 = 2.2 + Math.random() * 1.2;
+      var th0 = Math.random() * Math.PI * 2;
+      var ph0 = Math.acos(2 * Math.random() - 1);
+      ax = p.x * 0.30 + rr0 * Math.sin(ph0) * Math.cos(th0);
+      ay = rr0 * Math.sin(ph0) * Math.sin(th0) * 0.8;
+      az = rr0 * Math.cos(ph0) * 0.7;
+    }
+    main.from.push(new THREE.Vector3(ax, ay, az));
+  }
+
+  var dust = { pos: [], seed: [], size: [] };
+  for(var d = 0; d < N_DUST; d++){
+    dust.pos.push(new THREE.Vector3(
+      (Math.random() - 0.5) * 20,
+      (Math.random() - 0.5) * 12,
+      (Math.random() - 0.5) * 10
     ));
-    target.push(barbellTarget(i));
+    dust.seed.push(Math.random() * 100);
+    dust.size.push(0.42 + Math.random() * 0.38);
   }
 
-  var positions = new Float32Array(COUNT * 3);
-  var colors = new Float32Array(COUNT * 3);
-  var cLeft = new THREE.Color('#4A7DFF');
-  var cRight = new THREE.Color('#F0B429');
-  var cBar = new THREE.Color('#8FA0BA');
+  // ---------------- 着色器 ----------------
+  var VERT = [
+    'attribute float aSize;',
+    'attribute vec3 aColor;',
+    'attribute float aAlpha;',
+    'attribute vec3 aFrom;',        // 起始（散乱）位置，常驻 GPU
+    'attribute float aLag;',        // 每颗粒子的错峰延迟（0~0.22）
+    'attribute float aSpread;',     // 每颗粒子的散开距离系数（0~1）
+    'uniform float uPR;',
+    'uniform float uScale;',
+    'uniform float uProgress;',     // 0→1 聚合成形
+    'uniform float uDissolve;',     // 0→1 散开
+    'uniform float uTime;',
+    'uniform float uLightBoost;',    // 浅色主题下提亮，深色下为 0
+    'varying vec3 vColor;',
+    'varying float vAlpha;',
+    'void main(){',
+    // 错峰后的局部进度，easeOutExpo 近似
+    '  float lp = clamp((uProgress - aLag) / max(0.001, 1.0 - aLag), 0.0, 1.0);',
+    '  lp = 1.0 - pow(2.0, -10.0 * lp);',
+    '  vec3 p = mix(aFrom, position, lp);',
+    // 静息呼吸（只在完全成形且未散开时）
+    '  float settled = step(0.999, uProgress) * (1.0 - uDissolve);',
+    '  p.x += sin(uTime * 0.0011 + aLag * 14.0) * 0.018 * settled;',
+    '  p.y += cos(uTime * 0.0009 + aLag * 23.0) * 0.018 * settled;',
+    // 散开：从中心向外推
+    '  if(uDissolve > 0.0){',
+    '    vec3 dir = normalize(position + vec3(0.0001));',
+    '    p += dir * uDissolve * (3.2 + aSpread * 4.5);',
+    '  }',
+    '  vec4 mv = modelViewMatrix * vec4(p, 1.0);',
+    '  gl_Position = projectionMatrix * mv;',
+    // 深度亮度：正交相机下用顶点自身 z 作为深浅线索
+    '  float dfac = clamp(1.0 + position.z * 0.30, 0.55, 1.0);',
+    // 浅色背景需要更实的颜色（否则叠加后发灰），深色背景反而要收敛
+    '  vec3 base = aColor * mix(0.52, 1.06, dfac);',
+    '  vColor = mix(base, base * 1.18, uLightBoost);',
+    '  vAlpha = aAlpha * mix(0.72, 1.0, dfac) * min(1.0, uProgress * 1.6) * (1.0 - uDissolve * 0.92);',
+    '  gl_PointSize = aSize * 15.0 * uScale * uPR * (0.68 + 0.5 * dfac);',
+    '}'
+  ].join('\n');
 
-  for(var k = 0; k < COUNT; k++){
-    var p = scatter[k];
-    positions[k*3] = p.x; positions[k*3+1] = p.y; positions[k*3+2] = p.z;
-    var c = (k % 7 === 0) ? cBar : (k % 2 === 0 ? cLeft : cRight);
-    colors[k*3] = c.r; colors[k*3+1] = c.g; colors[k*3+2] = c.b;
+  var FRAG = [
+    'varying vec3 vColor;',
+    'varying float vAlpha;',
+    'void main(){',
+    '  vec2 c = gl_PointCoord - vec2(0.5);',
+    '  float d = length(c) * 2.0;',           // 0 在中心，1 在边缘
+    '  if(d > 1.0) discard;',
+    // 中心实心 + 边缘一像素级柔化，保持"点"的锐利感
+    '  float a = (1.0 - smoothstep(0.55, 1.0, d)) * vAlpha;',
+    '  if(a < 0.01) discard;',
+    '  gl_FragColor = vec4(vColor, a);',
+    '}'
+  ].join('\n');
+
+    // 所有材质共享同一组 uniforms：每帧只改 uProgress / uDissolve / uTime
+  var sharedUniforms = {
+    uPR: { value: renderer.getPixelRatio() },
+    uScale: { value: 0.1 },
+    uProgress: { value: 0.0 },
+    uDissolve: { value: 0.0 },
+    uTime: { value: 0.0 },
+    uLightBoost: { value: 0.0 }
+  };
+
+  function makeMaterial(additive){
+    return new THREE.ShaderMaterial({
+      vertexShader: VERT,
+      fragmentShader: FRAG,
+      transparent: true,
+      depthWrite: false,
+      blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+      uniforms: sharedUniforms
+    });
   }
 
-  var geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  // ---------------- 主体粒子 ----------------
+  var mainPos = new Float32Array(N_MAIN * 3);   // 目标（成形后）位置
+  var mainFrom = new Float32Array(N_MAIN * 3);  // 起始（散乱）位置
+  var mainLag = new Float32Array(N_MAIN);       // 错峰延迟
+  var mainSpread = new Float32Array(N_MAIN);    // 散开距离系数
+  var mainCol = new Float32Array(N_MAIN * 3);
+  var mainSize = new Float32Array(N_MAIN);
+  var mainAlpha = new Float32Array(N_MAIN);     // 常驻 1.0，透明度由着色器控制
 
-  // 圆形粒子贴图（程序生成，不引外部图片）
-  var sprite = (function(){
-    var s = document.createElement('canvas');
-    s.width = s.height = 64;
-    var ctx = s.getContext('2d');
-    var g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    g.addColorStop(0, 'rgba(255,255,255,1)');
-    g.addColorStop(0.35, 'rgba(255,255,255,0.5)');
-    g.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 64, 64);
-    return new THREE.CanvasTexture(s);
-  })();
+  var C_LEFT  = new THREE.Color('#4A7DFF');   // 左边的稳健
+  var C_RIGHT = new THREE.Color('#F0B429');   // 右边的凸性
+  var C_BAR   = new THREE.Color('#7E8FA8');   // 中间的杆
 
-  var mat = new THREE.PointsMaterial({
-    size: isMobile ? 0.09 : 0.078,
-    vertexColors: true, map: sprite, transparent: true, opacity: 0,
-    depthWrite: false,
-    // 浅色背景不能用加色混合（会被冲淡成白色），按主题切换混合方式
-    blending: document.documentElement.getAttribute('data-theme') === 'dark'
-      ? THREE.AdditiveBlending : THREE.NormalBlending,
-    sizeAttenuation: true
-  });
+  for(var k = 0; k < N_MAIN; k++){
+    var c = main.kind[k] === 0 ? C_LEFT : (main.kind[k] === 1 ? C_RIGHT : C_BAR);
+    // 同色系内做 ±8% 的明度抖动，避免塑料感
+    var jitter = 0.92 + Math.random() * 0.16;
+    mainCol[k*3]   = Math.min(1, c.r * jitter);
+    mainCol[k*3+1] = Math.min(1, c.g * jitter);
+    mainCol[k*3+2] = Math.min(1, c.b * jitter);
+    mainSize[k] = main.size[k] * (main.kind[k] === 2 ? 0.92 : 1.0);
+    mainAlpha[k] = main.kind[k] === 2 ? 0.88 : 1.0;   // 杆略暗于球
 
-  var points = new THREE.Points(geo, mat);
-  scene.add(points);
+    var t = main.to[k], f = main.from[k];
+    mainPos[k*3] = t.x; mainPos[k*3+1] = t.y; mainPos[k*3+2] = t.z;
+    mainFrom[k*3] = f.x; mainFrom[k*3+1] = f.y; mainFrom[k*3+2] = f.z;
+    mainLag[k] = (k % 97) / 97 * 0.22;
+    mainSpread[k] = (k % 31) / 31;   // 散开距离的自然分布
+  }
 
-  var T_CONVERGE = 2000, T_HOLD = 1600, T_DISSOLVE = 1400;
-  var TOTAL = T_CONVERGE + T_HOLD + T_DISSOLVE;
+  var mainGeo = new THREE.BufferGeometry();
+  mainGeo.setAttribute('position', new THREE.BufferAttribute(mainPos, 3));
+  mainGeo.setAttribute('aFrom', new THREE.BufferAttribute(mainFrom, 3));
+  mainGeo.setAttribute('aLag', new THREE.BufferAttribute(mainLag, 1));
+  mainGeo.setAttribute('aSpread', new THREE.BufferAttribute(mainSpread, 1));
+  mainGeo.setAttribute('aColor', new THREE.BufferAttribute(mainCol, 3));
+  mainGeo.setAttribute('aSize', new THREE.BufferAttribute(mainSize, 1));
+  mainGeo.setAttribute('aAlpha', new THREE.BufferAttribute(mainAlpha, 1));
+
+  var mainMat = makeMaterial(isDark());
+  var mainPoints = new THREE.Points(mainGeo, mainMat);
+  scene.add(mainPoints);
+
+  // ---- 两端的体积核心：fresnel 发光球壳（边缘亮、中心透，产生真实球体感）----
+  var CORE_VERT = [
+    'varying vec3 vNormalW;',
+    'varying vec3 vViewDir;',
+    'void main(){',
+    '  vec4 wp = modelMatrix * vec4(position, 1.0);',
+    '  vNormalW = normalize(mat3(modelMatrix) * normal);',
+    '  vViewDir = normalize(cameraPosition - wp.xyz);',
+    '  gl_Position = projectionMatrix * viewMatrix * wp;',
+    '}'
+  ].join('\n');
+
+  var CORE_FRAG = [
+    'uniform vec3 uColor;',
+    'uniform float uOpacity;',
+    'varying vec3 vNormalW;',
+    'varying vec3 vViewDir;',
+    'void main(){',
+    '  float f = 1.0 - abs(dot(normalize(vNormalW), normalize(vViewDir)));',
+    // 只在边缘亮起，中心几乎全透 —— 像一层薄薄的辉光壳
+    '  float rim = pow(f, 2.6);',
+    '  float a = rim * uOpacity;',
+    '  gl_FragColor = vec4(uColor, a);',
+    '}'
+  ].join('\n');
+
+  function makeShell(color, additive){
+    var geo = new THREE.SphereGeometry(1.09, 48, 32);
+    var mat = new THREE.ShaderMaterial({
+      vertexShader: CORE_VERT,
+      fragmentShader: CORE_FRAG,
+      transparent: true,
+      depthWrite: false,
+      blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+      uniforms: {
+        uColor: { value: new THREE.Color(color) },
+        uOpacity: { value: additive ? 0.55 : 0.30 }
+      }
+    });
+    return new THREE.Mesh(geo, mat);
+  }
+
+  var shellL = makeShell('#4A7DFF', isDark());
+  var shellR = makeShell('#F0B429', isDark());
+  shellL.position.set(-2.55, 0, 0);
+  shellR.position.set(2.55, 0, 0);
+  mainPoints.add(shellL);
+  mainPoints.add(shellR);
+
+
+
+  // ---------------- 环境尘埃 ----------------
+  var dustPos = new Float32Array(N_DUST * 3);
+  var dustCol = new Float32Array(N_DUST * 3);
+  var dustSize = new Float32Array(N_DUST);
+  var dustAlpha = new Float32Array(N_DUST);
+
+  for(var q = 0; q < N_DUST; q++){
+    var dp = dust.pos[q];
+    dustPos[q*3] = dp.x; dustPos[q*3+1] = dp.y; dustPos[q*3+2] = dp.z;
+    // 尘埃用中性冷色，亮度很低，只做氛围
+    var g = 0.55 + Math.random() * 0.25;
+    dustCol[q*3] = g * 0.72; dustCol[q*3+1] = g * 0.80; dustCol[q*3+2] = g;
+    dustSize[q] = dust.size[q];
+    dustAlpha[q] = 0.10 + Math.random() * 0.18;
+  }
+
+  var dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+  dustGeo.setAttribute('aColor', new THREE.BufferAttribute(dustCol, 3));
+  dustGeo.setAttribute('aSize', new THREE.BufferAttribute(dustSize, 1));
+  dustGeo.setAttribute('aAlpha', new THREE.BufferAttribute(dustAlpha, 1));
+
+  var dustMat = makeMaterial(isDark());
+  var dustPoints = new THREE.Points(dustGeo, dustMat);
+  scene.add(dustPoints);
+
+  // ---------------- 布局 ----------------
+  // 注意：必须用 canvas 自身的 CSS 尺寸，不能用 hero 容器尺寸。
+  // 移动端 canvas 被 CSS 限制成近正方形（390x390），而 hero 容器高得多；
+  // 若按容器尺寸设置后备缓冲，画面会被 CSS 纵向压缩，球体就扁了。
+  var matScale = 0.1;
+  function layout(){
+    var w = canvas.clientWidth || hero.clientWidth;
+    var h = canvas.clientHeight || hero.clientHeight;
+    if(w <= 0 || h <= 0) return;
+
+    renderer.setSize(w, h, false);
+
+    // 正交视锥：纵向固定 VIEW_H，横向按画布宽高比展开 → 任何比例下球体都是正圆
+    var aspect = w / h;
+    var halfH = VIEW_H / 2;
+    var halfW = halfH * aspect;
+    camera.left = -halfW;
+    camera.right = halfW;
+    camera.top = halfH;
+    camera.bottom = -halfH;
+    camera.updateProjectionMatrix();
+
+    // 正交下粒子尺寸与画布尺寸无关，常数标定即可
+    matScale = 0.1;
+    if(mainMat.uniforms && mainMat.uniforms.uScale) mainMat.uniforms.uScale.value = matScale;
+    if(dustMat.uniforms && dustMat.uniforms.uScale) dustMat.uniforms.uScale.value = matScale;
+
+    // 杠铃总宽（含球外沿）约 7.5 世界单位
+    var BARBELL_W = 7.5;
+
+    if(w >= 861){
+      // 桌面：动画占画面右侧约一半，避开左侧文案
+      var sc = Math.min(1.0, (halfW * 2 * 0.46) / BARBELL_W);
+      mainPoints.scale.setScalar(sc);
+      dustPoints.scale.setScalar(sc);
+      mainPoints.position.set(halfW * 0.50, -0.05, 0);
+      dustPoints.position.set(halfW * 0.50, -0.05, 0);
+    } else {
+      // 移动：canvas 已是近正方形，让它占满宽度
+      var sc2 = (halfW * 2 * 1.02) / BARBELL_W;
+      mainPoints.scale.setScalar(sc2);
+      dustPoints.scale.setScalar(sc2);
+      mainPoints.position.set(0, 0, 0);
+      dustPoints.position.set(0, 0, 0);
+    }
+  }
+  layout();
+
+  // ---------------- 时间轴（循环） ----------------
+  // 0──────2.2s  聚合成形
+  // 2.2────4.4s  悬浮呼吸（缓慢旋转）
+  // 4.4────6.0s  散开
+  // 6.0────6.6s  静默
+  // 然后重新开始
+  // 无空白段：散开结束即开始下一轮聚入，衔接处保留微弱余量
+  var T_FORM = 2400, T_BREATHE = 2400, T_DISSOLVE = 1700, T_GAP = 0;
+  var CYCLE = T_FORM + T_BREATHE + T_DISSOLVE;
+
   var start = performance.now();
-  var shown = [false, false, false];
-  var CAPS = [
-    { at: 120,  text: '两头重，中间轻' },
-    { at: 2150, text: '左侧求稳 · 右侧求凸' },
-    { at: 3900, text: '只告知位置，不给方向' }
-  ];
+  var running = true;
+  var visible = true;
 
-  function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
-  function easeInOutQuad(x){ return x < 0.5 ? 2*x*x : 1 - Math.pow(-2*x+2, 2)/2; }
+  function easeOutExpo(x){ return x >= 1 ? 1 : 1 - Math.pow(2, -10 * x); }
+  function easeInOutSine(x){ return -(Math.cos(Math.PI * x) - 1) / 2; }
+  function clamp01(x){ return x < 0 ? 0 : (x > 1 ? 1 : x); }
 
-  var pos = geo.attributes.position;
+  var dustAttr = dustGeo.attributes.position;
+  var dustSeedAttr = dustGeo.attributes.aSeed || null;
 
   function frame(now){
-    if(done) return;
+    if(!running) return;
     var el = now - start;
+    var t = el % CYCLE;
 
-    var conv = Math.min(el / T_CONVERGE, 1);
-    var ce = easeOutCubic(conv);
-    var dis = Math.min(Math.max(0, el - T_CONVERGE - T_HOLD) / T_DISSOLVE, 1);
-    var de = easeInOutQuad(dis);
+    // --- 阶段进度（只算 3 个数）---
+    var formP = clamp01(t / T_FORM);
+    var dissolveP = clamp01((t - T_FORM - T_BREATHE) / T_DISSOLVE);
+    var breatheP = clamp01((t - T_FORM) / T_BREATHE);
 
-    for(var i = 0; i < COUNT; i++){
-      var s = scatter[i], t = target[i];
-      var lag = (i % 60) / 60 * 0.16;
-      var p = Math.max(0, Math.min(1, (ce - lag) / (1 - lag)));
-      var x = s.x + (t.x - s.x) * p;
-      var y = s.y + (t.y - s.y) * p;
-      var z = s.z + (t.z - s.z) * p;
-      if(dis > 0){
-        var len = Math.hypot(t.x, t.y, t.z) || 1;
-        var spread = de * (5.5 + (i % 13) * 0.5);
-        x += (t.x / len) * spread;
-        y += (t.y / len) * spread;
-        z += (t.z / len) * spread * 0.7;
-      }
-      pos.array[i*3] = x;
-      pos.array[i*3+1] = y;
-      pos.array[i*3+2] = z;
-    }
-    pos.needsUpdate = true;
+    var fe = easeOutExpo(formP);
+    var de = easeInOutSine(dissolveP);
 
-    points.rotation.y = el * 0.00026;
-    points.rotation.x = Math.sin(el * 0.00038) * 0.14;
+    // --- 主体粒子：位置全部在 GPU 里插值，这里只更新 uniform ---
+    sharedUniforms.uProgress.value = fe;
+    sharedUniforms.uDissolve.value = de;
+    sharedUniforms.uTime.value = el;
 
-    if(el < 650) mat.opacity = (el / 650) * 0.95;
-    else if(dis > 0) mat.opacity = 0.95 * (1 - de);
-    else mat.opacity = 0.95;
+    // 球壳跟随主粒子相位：聚入淡入、散开同步淡出，避免留下空心球
+    var shellFade = Math.min(clamp01(formP * 1.5), 1) * (1 - de);
+    var shellBase = lastDark ? 0.55 : 0.30;
+    var pulse = 1 + Math.sin(el * 0.0013) * 0.02;
+    shellL.material.uniforms.uOpacity.value = shellBase * shellFade;
+    shellR.material.uniforms.uOpacity.value = shellBase * shellFade;
+    shellL.scale.setScalar(pulse);
+    shellR.scale.setScalar(pulse);
 
-    for(var c = 0; c < CAPS.length; c++){
-      if(!shown[c] && el >= CAPS[c].at){
-        shown[c] = true;
-        if(cap){ cap.textContent = CAPS[c].text; cap.classList.add('on'); }
-      }
-    }
+    // --- 尘埃：整体缓慢漂移交给 rotation，不再逐点计算 ---
+    dustPoints.rotation.y = el * 0.00006;
+    dustPoints.rotation.x = Math.sin(el * 0.00011) * 0.04;
+
+    // --- 主体旋转与轻微视差 ---
+    var rotBase = formP * 0.34;
+    var rotBreathe = breatheP * 0.20 * (1 - dissolveP);
+    mainPoints.rotation.y = rotBase + rotBreathe + de * 0.5;
+    mainPoints.rotation.x = Math.sin(el * 0.00035) * 0.085;
 
     renderer.render(scene, camera);
 
-    if(el < TOTAL + 650) raf = requestAnimationFrame(frame);
-    else finish();
+    if(visible) requestAnimationFrame(frame);
   }
 
-  window.addEventListener('resize', function(){
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+  // --- 主题切换时重建材质（混合模式不同） ---
+  var lastDark = isDark();
+  sharedUniforms.uLightBoost.value = lastDark ? 0.0 : 1.0;
+  setInterval(function(){
+    var nowDark = isDark();
+    if(nowDark !== lastDark){
+      lastDark = nowDark;
+      mainPoints.material = makeMaterial(nowDark);
+      dustPoints.material = makeMaterial(nowDark);
+      layout();
+      // 浅色背景用实色粒子，深色背景靠加色发光
+      sharedUniforms.uLightBoost.value = nowDark ? 0.0 : 1.0;
+      [shellL, shellR].forEach(function(s){
+        s.material.blending = nowDark ? THREE.AdditiveBlending : THREE.NormalBlending;
+        s.material.uniforms.uOpacity.value = nowDark ? 0.55 : 0.30;
+        s.material.needsUpdate = true;
+      });
+
+    }
+  }, 600);
+
+  // --- 离屏暂停，省电 ---
+  document.addEventListener('visibilitychange', function(){
+    visible = !document.hidden;
+    if(visible && running){
+      start = performance.now();       // 重新对齐时间轴，避免跳帧
+      requestAnimationFrame(frame);
+    }
   });
 
-  if(skip) skip.addEventListener('click', finish);
-  intro.addEventListener('click', function(e){ if(e.target === intro) finish(); });
-  window.addEventListener('wheel', finish, { passive: true, once: true });
-  window.addEventListener('keydown', finish, { once: true });
+  window.addEventListener('resize', layout);
 
-  raf = requestAnimationFrame(frame);
-  setTimeout(finish, TOTAL + 2600);
+  if(reduceMotion){
+    // 减少动效：直接渲染一帧完整形态，不循环
+    start = performance.now() - T_FORM;
+    frame(performance.now());
+    running = false;
+    return;
+  }
+
+  requestAnimationFrame(frame);
 })();
 
 /* ============================================================
