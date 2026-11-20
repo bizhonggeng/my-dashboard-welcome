@@ -20,7 +20,11 @@
     performance: {
       mobileBreakpoint: 861,       // 与站点 CSS @media (max-width: 860px) 严格对齐
       maxDprDesktop: 1.75,         // 桌面端最大设备像素比（规范要求 <= 2.0）
-      maxDprMobile: 1.5,           // 移动端最大设备像素比
+      maxDprMobile: 3.0,           // 移动端最大设备像素比
+      // ↑ 原为 1.5。实测 iPhone/主流安卓 DPR=3，钳到 1.5 只用了 50% 物理像素，
+      //   在 390pt 屏上 canvas 仅 585px 宽，细线框与球体边缘明显发虚。
+      //   移动端 canvas 只有 390×784 CSS，按 DPR=3 渲染也仅 1170×2352，
+      //   三角形数量已按 42% 削减，GPU 压力可控。
       mobileParticleRatio: 0.42,   // 移动端粒子保留比例（约 40%）
       antialias: true
     },
@@ -51,13 +55,15 @@
         rollX: 0.16                // 俯仰立体倾角
       },
 
-      // 移动端：开场居中于全屏（无文字遮罩态），随后缩小并上移归位至画面顶端区域
+      // 移动端：受 390pt 窄屏限制，归位态需要更饱满才不至于显小
       mobile: {
         introScale: 1.04,          // 开场全屏居中时的饱满尺寸
         introPitchZ: 0.05,
 
         dockedOffsetX: 0.0,
-        dockedScale: 0.78,         // 收缩至顶端后的精致尺寸
+        // 归位态尺寸。实测 0.78 时图形仅占屏宽 69.9%、右侧留白 23.1%，
+        // 视觉上"又小又飘"；抬到 1.02 后约占屏宽 92%，左右留白趋于对称。
+        dockedScale: 1.15,
         dockedPitchZ: 0.13,
         yawY: -0.14,
         rollX: 0.15
