@@ -121,13 +121,40 @@ header{
 #heroCanvas{
   position:absolute;inset:0;width:100%;height:100%;
   display:block;z-index:0;pointer-events:none;
+  opacity:0;                 /* 默认隐藏：等场景脚本接管后再显示 */
+  transition:opacity .8s ease;
+}
+/* 场景脚本就绪（自己给 body 加 .hero-ready）后，canvas 接管、占位退场 */
+body.hero-ready #heroCanvas{opacity:1}
+body.hero-ready .hero-stage{opacity:0;pointer-events:none}
+
+/* 静态占位：动画未接入时的默认构图，深浅主题都成立 */
+.hero-stage{
+  position:absolute;inset:0;z-index:0;
+  display:flex;align-items:center;justify-content:flex-end;
+  padding-right:clamp(16px,4vw,64px);
+  color:var(--text);          /* 轴线/游标用 currentColor，自动跟随主题 */
+  transition:opacity .8s ease;
+}
+.hero-stage svg{
+  width:min(56%,860px);height:auto;
+  opacity:.96;
+}
+@media (max-width:860px){
+  .hero-stage{
+    inset:auto 0 auto 0;top:0;height:min(62vw,250px);
+    justify-content:center;padding-right:0;
+    transform:translateY(-18px);
+  }
+  .hero-stage svg{width:96%}
 }
 /* 深底：无论站点主题如何，这一块始终是深色舞台 */
+/* 背景跟随主题：浅色用页面底色，深色用页面深底色，不再写死 */
 .hero{
-  background:#08090C;
-  --hero-fg:#E8ECF2;
-  --hero-fg-2:#9BA6B8;
-  --hero-fg-3:#6B7688;
+  background:var(--bg);
+  --hero-fg:var(--text);
+  --hero-fg-2:var(--text-2);
+  --hero-fg-3:var(--text-3);
 }
 .hero .eyebrow{color:var(--hero-fg-3)}
 .hero .eyebrow::before{background:var(--hero-fg-3)}
@@ -435,7 +462,80 @@ footer{
 
 <!-- ========== ① Hero：three.js 循环动画 ========== -->
 <section class="hero" id="hero">
+  <!-- ============================================================
+       动画挂载点
+       设计模型产出的 three.js 场景应渲染到下面这个 canvas。
+       接入方式见 HERO-ANIM-SPEC.md；canvas 自带 inset:0 铺满整块，
+       且 pointer-events:none —— 不会吃掉 CTA 的点击。
+       ============================================================ -->
   <canvas id="heroCanvas" aria-hidden="true"></canvas>
+
+  <!-- 静态占位构图（动画接入后，给 body 加 .hero-ready 即可隐藏它） -->
+  <div class="hero-stage" id="heroStage" aria-hidden="true">
+    <svg viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid meet" role="presentation">
+      <defs>
+        <!-- 稳健端：圆柱的纵向明暗（上高光 / 下暗部 / 底部一条反光边） -->
+        <linearGradient id="cylGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#454E5E"/>
+          <stop offset="9%"   stop-color="#98A2B2"/>
+          <stop offset="26%"  stop-color="#B6C0CE"/>
+          <stop offset="58%"  stop-color="#77818F"/>
+          <stop offset="88%"  stop-color="#3A4250"/>
+          <stop offset="100%" stop-color="#59636F"/>
+        </linearGradient>
+        <!-- 凸性端：上下两个面分开填，形成锐利的棱 -->
+        <linearGradient id="coneUp" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stop-color="#E8AE2E"/>
+          <stop offset="100%" stop-color="#FFD166"/>
+        </linearGradient>
+        <linearGradient id="coneDown" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stop-color="#8A6210"/>
+          <stop offset="100%" stop-color="#C99518"/>
+        </linearGradient>
+        <radialGradient id="tipGlow">
+          <stop offset="0%"   stop-color="#F0B429" stop-opacity=".55"/>
+          <stop offset="55%"  stop-color="#F0B429" stop-opacity=".14"/>
+          <stop offset="100%" stop-color="#F0B429" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- 轴线：左段与右段实线，中段留空 -->
+      <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <line x1="56"  y1="200" x2="512" y2="200" opacity=".38"/>
+        <line x1="698" y1="200" x2="1150" y2="200" opacity=".38"/>
+      </g>
+      <!-- 中段：虚线真空带（禁入，不承载） -->
+      <line x1="512" y1="200" x2="698" y2="200"
+            stroke="currentColor" stroke-width="1.5"
+            stroke-dasharray="13 15" opacity=".30"/>
+
+      <!-- 稳健端：厚重哑光圆柱 -->
+      <g>
+        <rect x="132" y="122" width="258" height="156" rx="7" fill="url(#cylGrad)"/>
+        <!-- 顶缘一道极细的亮边，强化"实体"而不是"贴片" -->
+        <line x1="140" y1="127" x2="382" y2="127"
+              stroke="#D6DEE9" stroke-opacity=".30" stroke-width="2"/>
+        <!-- 底缘反光 -->
+        <line x1="140" y1="273" x2="382" y2="273"
+              stroke="#7E8A99" stroke-opacity=".35" stroke-width="1.5"/>
+      </g>
+
+      <!-- 凸性端：小而尖的自发光锥，上下两面取不同明度 -->
+      <g>
+        <circle cx="1082" cy="200" r="86" fill="url(#tipGlow)"/>
+        <polygon points="944,150 1082,200 944,200" fill="url(#coneUp)"/>
+        <polygon points="944,200 1082,200 944,250" fill="url(#coneDown)"/>
+        <line x1="944" y1="200" x2="1082" y2="200"
+              stroke="#FFE9A8" stroke-opacity=".55" stroke-width="1"/>
+      </g>
+
+      <!-- 再平衡游标：落在真空带中央，暗示重心位置 -->
+      <g stroke="currentColor" opacity=".30">
+        <line x1="605" y1="176" x2="605" y2="224" stroke-width="1.5"/>
+      </g>
+      <polygon points="598,170 612,170 605,179" fill="currentColor" opacity=".40"/>
+    </svg>
+  </div>
   <div class="wrap">
     <div class="hero-copy">
       <span class="eyebrow h1-in">Barbell Strategy Monitor</span>
@@ -448,9 +548,6 @@ footer{
     </div>
   </div>
 </section>
-<script src="assets/vendor/three.umd.min.js"></script>
-<script src="assets/vendor/three.umd.min.js"></script>
-
 <!-- ========== ② 设计哲学 ========== -->
 <div class="wrap">
   <section id="philosophy">
@@ -761,664 +858,35 @@ footer{
 </div>
 
 <script>
-/* ============================================================================
-   Hero 动画 —— 结构与信号
-   母题：两端极重、中间留空、冲击打过来反而变亮
-   约束：不整体旋转 / 相机固定 / 单个 rAF / 不引入物理引擎 / 正确 dispose
-============================================================================ */
+/* ============================================================
+   1) Hero 文案淡入 + 下半页滚动入场
+   —— 刻意与 3D 动画解耦：动画挂掉 / 未接入 / reduced-motion，
+      这部分都必须正常工作，否则整页会静默空白
+   ============================================================ */
 (function(){
-  var hero   = document.getElementById('hero');
-  var canvas = document.getElementById('heroCanvas');
-  if(!hero || !canvas) return;
-
-  // 文案先于动画开始淡入（canvas 入场 3.4s，文案 .95s 起错峰）
-  requestAnimationFrame(function(){ hero.classList.add('on'); });
-
-  function webglOK(){
-    try{
-      var c = document.createElement('canvas');
-      return !!(window.WebGLRenderingContext &&
-                (c.getContext('webgl2') || c.getContext('webgl')));
-    }catch(e){ return false; }
+  var hero = document.getElementById('hero');
+  if(hero){
+    // 下一帧再加 on，保证 CSS 动画能触发
+    requestAnimationFrame(function(){ hero.classList.add('on'); });
   }
+
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items = document.querySelectorAll('.reveal');
+  if(!items.length) return;
 
-  if(!window.THREE || !webglOK()){
-    canvas.style.display = 'none';
+  if(reduced || !('IntersectionObserver' in window)){
+    for(var i = 0; i < items.length; i++) items[i].classList.add('in');
     return;
   }
-  var THREE = window.THREE;
-
-  /* ==========================================================================
-     ★ 可调参数
-     ========================================================================== */
-  var CFG = {
-    COL_BASE:   0xDDE4EF,   // 轴线 / 指针 / 尘埃
-    COL_STABLE: 0x5A6473,   // 稳健端：哑光灰，不发光
-    COL_CONVEX: 0xF0B429,   // 凸性端：唯一强调色，自发光
-
-    WEIGHT_STABLE: 0.95,    // 稳健端权重（语义标注，不画成体积比例）
-    WEIGHT_CONVEX: 0.05,    // 凸性端权重
-
-    DUR_INTRO: 3400,        // 入场时长 ms（3~4s）
-    T_AXIS: 0.10,           // 轴线开始渐显
-    T_DROP: 0.20,           // 两端开始吸附
-    T_LOCK: 0.86,           // 锁定一顿
-
-    DUST_DESKTOP: 780,
-    DUST_MOBILE:  320,
-    IMPACT_MAX: 4,          // 同时在场的冲击球上限
-    IMPACT_GAP: 1150,       // 冲击间隔 ms
-    IMPACT_SPEED: 6.5,
-    IMPACT_SIZE: 0.055,
-
-    DPR_MAX: 1.8,
-    VIEW_H: 7.4
-  };
-
-  var isMobile = window.innerWidth < 861;
-
-  /* ---------------- 场景 / 固定正交相机 ---------------- */
-  var scene  = new THREE.Scene();
-  var camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
-  camera.position.set(0, 0, 20);
-
-  var renderer = new THREE.WebGLRenderer({
-    canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance'
-  });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, CFG.DPR_MAX));
-  renderer.setClearColor(0x000000, 0);
-
-  /* ---------------- 结构常量（世界单位） ---------------- */
-  var AXIS_X     = 6.6;      // 轴线半长
-  var STABLE_X   = -4.35;    // 稳健端中心
-  var CONVEX_X   =  4.75;    // 凸性端中心
-  var STABLE_R   = 0.86;     // 稳健端粗细（厚重）
-  var CONVEX_H   = 0.58;     // 凸性端锥高（小巧锋利，但需可辨识）
-  var VACUUM_X   = 2.60;     // 真空带半宽
-  var STABLE_HALF = STABLE_R * 2.15;   // 胶囊体半长（含端半球）
-  var STABLE_FACE_L = STABLE_X - STABLE_HALF;   // 左表面
-  var STABLE_FACE_R = STABLE_X + STABLE_HALF;   // 右表面
-
-  /* ---------------- 材质（统一登记，便于 dispose） ---------------- */
-  var trash = [];   // {geometry?, material?}
-  function track(o){ trash.push(o); return o; }
-
-  /* =======================  轴线  ======================= */
-  var axisGroup = new THREE.Group();
-  scene.add(axisGroup);
-
-  function solidLine(x0, x1, opacity){
-    var g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(
-      new Float32Array([x0, 0, 0, x1, 0, 0]), 3));
-    var m = new THREE.LineBasicMaterial({
-      color: CFG.COL_BASE, transparent: true, opacity: opacity
-    });
-    track({ geometry: g, material: m });
-    var l = new THREE.Line(g, m);
-    axisGroup.add(l);
-    return l;
-  }
-  var axisL = solidLine(-AXIS_X, -VACUUM_X, 0);
-  var axisR = solidLine( VACUUM_X,  AXIS_X, 0);
-
-  // 中段：虚线（禁入区边界，视觉上"存在但不承载"）
-  var midGeo = new THREE.BufferGeometry();
-  (function(){
-    // LineSegments：每两个顶点构成一段，必须成对推入
-    var verts = [];
-    var step = 0.22, gap = 0.26;
-    for(var x = -VACUUM_X; x < VACUUM_X - 0.02; x += step + gap){
-      var x2 = Math.min(x + step, VACUUM_X);
-      if(x2 <= x) break;
-      verts.push(x, 0, 0);      // 段起点
-      verts.push(x2, 0, 0);     // 段终点
-    }
-    midGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(verts), 3));
-  })();
-  var midMat = new THREE.LineBasicMaterial({
-    color: CFG.COL_BASE, transparent: true, opacity: 0
-  });
-  track({ geometry: midGeo, material: midMat });
-  var axisMid = new THREE.LineSegments(midGeo, midMat);
-  axisGroup.add(axisMid);
-
-  /* =======================  稳健端：哑光厚圆柱  ======================= */
-  var stableGroup = new THREE.Group();
-  stableGroup.position.x = STABLE_X;
-  scene.add(stableGroup);
-
-  // 稳健端：沿 X 轴的胶囊体（中间圆柱 + 两端半球）
-  // 用 LatheGeometry 旋转生成，截面轮廓自带圆角，视觉上厚重且无"平端面"
-  var cylinder = (function(){
-    var R = STABLE_R;
-    var HALF = R * 1.15;          // 中间直段半长
-    var pts = [];
-    // 左端半球（从端点到直段）
-    var SEG = 14;
-    for(var i = 0; i <= SEG; i++){
-      var a = -Math.PI / 2 + (i / SEG) * (Math.PI / 2);   // -90°→0°
-      pts.push(new THREE.Vector2(Math.cos(a) * R, Math.sin(a) * R));
-    }
-    // 直段
-    pts.push(new THREE.Vector2(R, HALF));
-    // 右端半球
-    for(var j = 0; j <= SEG; j++){
-      var b = (j / SEG) * (Math.PI / 2);                  // 0°→90°
-      pts.push(new THREE.Vector2(Math.cos(b) * R, HALF + Math.sin(b) * R));
-    }
-    var g = new THREE.LatheGeometry(pts, 40);
-    // Lathe 生成的是绕 Y 轴的旋转体 → 旋转到 X 轴
-    g.rotateZ(-Math.PI / 2);
-    g.center();
-    // 压扁纵深：正视时是"厚圆柱的截面"，而不是一团球
-    g.scale(1, 0.92, 0.55);
-    return g;
-  })();
-  // 平滑着色：靠法向产生明暗渐变，才是哑光圆柱；flatShading 会变成一块块平面
-  var stableMat = new THREE.MeshLambertMaterial({
-    color: CFG.COL_STABLE, transparent: true, opacity: 0
-  });
-  track({ geometry: cylinder, material: stableMat });
-  var stableMesh = new THREE.Mesh(cylinder, stableMat);
-  stableGroup.add(stableMesh);
-
-  // 极克制的环境光（哑光靠 Lambert + 低强度方向光，不加高光）
-  scene.add(new THREE.AmbientLight(0xffffff, 0.30));
-  var keyLight = new THREE.DirectionalLight(0xffffff, 0.55);
-  keyLight.position.set(-6, 4, 9);
-  scene.add(keyLight);
-
-  /* =======================  凸性端：尖锐锥体 + 自发光晕  ======================= */
-  var convexGroup = new THREE.Group();
-  convexGroup.position.x = CONVEX_X;
-  scene.add(convexGroup);
-
-  var coneGeo = new THREE.ConeGeometry(CONVEX_H * 0.62, CONVEX_H * 1.70,
-                                       isMobile ? 12 : 18, 1);
-  coneGeo.rotateZ(-Math.PI / 2);   // 尖端朝右（背离轴线中心）
-  var coneMat = new THREE.MeshBasicMaterial({
-    color: CFG.COL_CONVEX, transparent: true, opacity: 0
-  });
-  track({ geometry: coneGeo, material: coneMat });
-  var coneMesh = new THREE.Mesh(coneGeo, coneMat);
-  convexGroup.add(coneMesh);
-
-  function glowTexture(){
-    var s = 128, cv = document.createElement('canvas');
-    cv.width = cv.height = s;
-    var ctx = cv.getContext('2d');
-    var g = ctx.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
-    g.addColorStop(0,    'rgba(255,255,255,1)');
-    g.addColorStop(0.28, 'rgba(255,255,255,.45)');
-    g.addColorStop(1,    'rgba(255,255,255,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, s, s);
-    return new THREE.CanvasTexture(cv);
-  }
-  var glowMat = new THREE.SpriteMaterial({
-    map: glowTexture(), color: CFG.COL_CONVEX, transparent: true,
-    opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false
-  });
-  track({ material: glowMat });
-  var convexGlow = new THREE.Sprite(glowMat);
-  convexGlow.scale.setScalar(2.3);
-  convexGroup.add(convexGlow);
-
-  /* =======================  环境尘埃（中段禁入）  ======================= */
-  var DUST_N = isMobile ? CFG.DUST_MOBILE : CFG.DUST_DESKTOP;
-  var dPos  = new Float32Array(DUST_N * 3);
-  var dSeed = new Float32Array(DUST_N);
-  var dSize = new Float32Array(DUST_N);
-
-  for(var i = 0; i < DUST_N; i++){
-    var x, tries = 0;
-    do{
-      x = (Math.random() - 0.5) * 15.4;
-      tries++;
-    }while(Math.abs(x) < VACUUM_X * 1.10 && tries < 30);   // 真空带禁入
-    dPos[i*3]   = x;
-    dPos[i*3+1] = (Math.random() - 0.5) * 7.6;
-    dPos[i*3+2] = (Math.random() - 0.5) * 4.0;
-    dSeed[i] = Math.random();
-    dSize[i] = 0.45 + Math.random() * 0.85;
-  }
-  var dustGeo = new THREE.BufferGeometry();
-  dustGeo.setAttribute('position', new THREE.BufferAttribute(dPos, 3));
-  dustGeo.setAttribute('aSeed',   new THREE.BufferAttribute(dSeed, 1));
-  dustGeo.setAttribute('aSize',   new THREE.BufferAttribute(dSize, 1));
-
-  var dustUni = {
-    uPR:    { value: renderer.getPixelRatio() },
-    uScale: { value: 0.1 },
-    uTime:  { value: 0 },
-    uAlpha: { value: 0 },
-    uColor: { value: new THREE.Color(CFG.COL_BASE) }
-  };
-  var DUST_V = [
-    'attribute float aSeed;',
-    'attribute float aSize;',
-    'uniform float uPR;',
-    'uniform float uScale;',
-    'uniform float uTime;',
-    'uniform float uAlpha;',
-    'varying float vA;',
-    'void main(){',
-    '  vec3 p = position;',
-    '  p.y += sin(uTime * 0.00012 + aSeed * 39.0) * 0.20;',
-    '  p.x += cos(uTime * 0.00010 + aSeed * 23.0) * 0.16;',
-    '  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);',
-    '  vA = uAlpha * (0.18 + 0.55 * aSeed);',
-    '  gl_PointSize = aSize * 3.4 * uScale * uPR;',
-    '}'
-  ].join('\n');
-  var DUST_F = [
-    'uniform vec3 uColor;',
-    'varying float vA;',
-    'void main(){',
-    '  vec2 d = gl_PointCoord - vec2(0.5);',
-    '  float r = length(d);',
-    '  if(r > 0.5) discard;',
-    '  gl_FragColor = vec4(uColor, smoothstep(0.5, 0.03, r) * vA);',
-    '}'
-  ].join('\n');
-  var dustMat = new THREE.ShaderMaterial({
-    vertexShader: DUST_V, fragmentShader: DUST_F,
-    uniforms: dustUni, transparent: true, depthWrite: false
-  });
-  track({ geometry: dustGeo, material: dustMat });
-  var dustPoints = new THREE.Points(dustGeo, dustMat);
-  scene.add(dustPoints);
-
-  /* =======================  冲击球  ======================= */
-  var IMP_N = isMobile ? 3 : CFG.IMPACT_MAX;
-  var imp = [];
-  for(var k = 0; k < IMP_N; k++){
-    imp.push({ on: false, x: 0, y: 0, vx: 0, vy: 0, age: 0 });
-  }
-  // 冲击球：InstancedMesh 小球 + 加色混合（Points 太小且会被实体遮挡）
-  var impGeo = new THREE.SphereGeometry(0.14, 12, 10);
-  var impMat = new THREE.MeshBasicMaterial({
-    color: CFG.COL_BASE, transparent: true, opacity: 0.95,
-    blending: THREE.AdditiveBlending, depthWrite: false
-  });
-  track({ geometry: impGeo, material: impMat });
-  var impMesh = new THREE.InstancedMesh(impGeo, impMat, IMP_N);
-  impMesh.frustumCulled = false;
-  impMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  var _m4 = new THREE.Matrix4();
-  for(var mi = 0; mi < IMP_N; mi++){
-    _m4.makeTranslation(0, 9999, 0);
-    impMesh.setMatrixAt(mi, _m4);
-  }
-  impMesh.instanceMatrix.needsUpdate = true;
-  scene.add(impMesh);
-
-  /* =======================  游标（再平衡的暗示）  ======================= */
-  // 不用悬空竖线+横排刻度（视觉上像故障），改成贴着轴线的小游标：
-  // 一条极短竖线 + 顶端三角，落在真空带中央，随再平衡缓慢横移
-  var needleGroup = new THREE.Group();
-  needleGroup.position.set(0, 0, 0);
-  scene.add(needleGroup);
-
-  var needleGeo = new THREE.BufferGeometry();
-  needleGeo.setAttribute('position', new THREE.BufferAttribute(
-    new Float32Array([0, 0.26, 0, 0, -0.26, 0]), 3));
-  var needleMat = new THREE.LineBasicMaterial({
-    color: CFG.COL_BASE, transparent: true, opacity: 0
-  });
-  track({ geometry: needleGeo, material: needleMat });
-  var needle = new THREE.Line(needleGeo, needleMat);
-  needleGroup.add(needle);
-
-  // 顶部小三角（指向下，标记位置）
-  var caretGeo = new THREE.BufferGeometry();
-  caretGeo.setAttribute('position', new THREE.BufferAttribute(
-    new Float32Array([-0.075, 0.30, 0,  0.075, 0.30, 0,  0, 0.20, 0]), 3));
-  var caretMat = new THREE.MeshBasicMaterial({
-    color: CFG.COL_BASE, transparent: true, opacity: 0
-  });
-  track({ geometry: caretGeo, material: caretMat });
-  var caret = new THREE.Mesh(caretGeo, caretMat);
-  caret.material.side = THREE.DoubleSide;
-  needleGroup.add(caret);
-
-  /* =======================  布局  ======================= */
-  var L = { shift: 0, scale: 1, ready: false };
-
-  function layout(){
-    var w = canvas.clientWidth  || hero.clientWidth;
-    var h = canvas.clientHeight || hero.clientHeight;
-    if(w <= 0 || h <= 0) return false;
-
-    renderer.setSize(w, h, false);
-
-    var vh = w >= 861 ? CFG.VIEW_H : CFG.VIEW_H * 1.10;
-    var aspect = w / h;
-    var halfH = vh / 2, halfW = halfH * aspect;
-    camera.left = -halfW; camera.right = halfW;
-    camera.top = halfH;   camera.bottom = -halfH;
-    camera.updateProjectionMatrix();
-
-    dustUni.uScale.value = 0.1;
-    dustUni.uPR.value = renderer.getPixelRatio();
-
-    // 桌面偏右给文案让位；移动端居中
-    // 桌面：结构整体放到画面右半（文案占左 40%）
-    L.shift = w >= 861 ? halfW * 0.36 : 0;
-    // 移动端：结构整体居中，两端靠内
-
-    // 结构总宽（两端外沿）
-    var totalW = (STABLE_X - STABLE_R) * -1 + (CONVEX_X + CONVEX_H) + 1.0;
-    totalW = Math.abs(STABLE_X) + STABLE_R + CONVEX_X + CONVEX_H + 0.4;
-    // 移动端竖直画布 halfW 很小，必须按可视宽度收紧
-    var fit = w >= 861 ? (halfW * 2 * 0.47) / totalW
-                       : (halfW * 2 * 0.74) / totalW;
-    L.scale = Math.min(1.08, fit);
-
-    dustPoints.position.x = L.shift;
-    L.ready = true;
-    return true;
-  }
-
-  function placeStatic(){
-    axisGroup.position.x   = L.shift;
-    axisGroup.scale.setScalar(L.scale);
-    stableGroup.scale.setScalar(L.scale);
-    convexGroup.scale.setScalar(L.scale);
-    needleGroup.scale.setScalar(L.scale);
-    stableGroup.position.x = L.shift + STABLE_X * L.scale;
-    convexGroup.position.x = L.shift + CONVEX_X * L.scale;
-    needleGroup.position.x = L.shift;
-    needleGroup.position.y = 0.30;
-  }
-
-  /* =======================  缓动  ======================= */
-  function cl01(x){ return x < 0 ? 0 : (x > 1 ? 1 : x); }
-  function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
-  function easeOutExpo(x){ return x >= 1 ? 1 : 1 - Math.pow(2, -9 * x); }
-
-  /* =======================  状态  ======================= */
-  var S = {
-    t: 0, introDone: false,
-    pulses: [],
-    stableFlash: 0,
-    impactGap: 0,
-    clock: 0, lastEl: 0
-  };
-
-  function spawnImpact(){
-    for(var i = 0; i < IMP_N; i++){
-      if(imp[i].on) continue;
-      var fromLeft = Math.random() < 0.5;
-      var o = imp[i];
-      o.on = true;
-      // 起点放在画面内侧边缘（不飞出视野），保证"飞入—命中"全程可见
-      // 起点给足距离，保证能看到完整的飞行过程
-      o.x  = fromLeft ? (STABLE_FACE_L - 4.2) : (CONVEX_X + 3.6);
-      o.y  = (Math.random() - 0.5) * 1.5;
-      o.vx = (fromLeft ? 1 : -1) * CFG.IMPACT_SPEED;
-      o.vy = (Math.random() - 0.5) * 0.8;
-      o.age = 0;
-      o.hit = null;
-      o.fade = 0;
-      o.side = fromLeft ? 'stable' : 'convex';
-      return;
-    }
-  }
-
-  function updateImpacts(dt){
-    for(var i = 0; i < IMP_N; i++){
-      var o = imp[i];
-      if(!o.on) continue;
-
-      o.age += dt;
-      o.x += o.vx * dt;
-      o.y += o.vy * dt;
-      o.vy -= 3.6 * dt;
-
-      if(o.age > 0.06 && !o.hit){
-        // 稳健端从左侧表面被撞（球自左向右飞入）
-        if(o.side === 'stable' && o.vx > 0 && o.x >= STABLE_FACE_L){
-          // 撞稳健端：被吸收 —— 减速归零并缩小消失
-          o.hit = 'absorb';
-          o.x = STABLE_FACE_L - 0.24;  // 停在表面外侧
-          o.vx = 0;
-          o.vy = 0;
-          o.fade = 0;
-          S.stableFlash = 1;
-        }
-        if(o.side === 'convex' && o.vx < 0 && o.x <= CONVEX_X - CONVEX_H * 0.70){
-          // 撞凸性端：弹起 + 脉冲变亮 + 上扬
-          o.hit = 'bounce';
-          o.vx = Math.abs(o.vx) * 0.50;
-          o.vy = 2.4 + Math.random() * 1.2;
-          o.fade = 0;
-          S.pulses.push({ t: 0, dur: 820 });
-        }
-      }
-
-      // 命中后的淡出
-      if(o.hit){
-        o.fade += dt * 2.2;
-        if(o.fade >= 1){ o.on = false; continue; }
-      }
-
-      if(o.age > 8){
-        o.on = false;
-        continue;
-      }
-
-      // 命中后缩小（被吸收）或保持（弹起）
-      var sc2 = o.hit === 'absorb' ? (1 - o.fade) * 0.8 : (1 - o.fade * 0.5);
-      _m4.makeScale(sc2, sc2, sc2);
-      _m4.setPosition(L.shift + o.x * L.scale, o.y * L.scale, 0.6);
-      impMesh.setMatrixAt(i, _m4);
-    }
-    // 未激活的移到视野外
-    for(var q = 0; q < IMP_N; q++){
-      if(!imp[q].on){
-        _m4.makeTranslation(0, 9999, 0);
-        impMesh.setMatrixAt(q, _m4);
+  var io = new IntersectionObserver(function(entries){
+    for(var j = 0; j < entries.length; j++){
+      if(entries[j].isIntersecting){
+        entries[j].target.classList.add('in');
+        io.unobserve(entries[j].target);
       }
     }
-    impMesh.instanceMatrix.needsUpdate = true;
-  }
-
-  /* =======================  主循环（唯一 rAF）  ======================= */
-  var running = true, visible = true;
-  var t0 = performance.now();
-
-  function frame(now){
-    if(!running) return;
-
-    if(!L.ready){ if(!layout()) { requestAnimationFrame(frame); return; } placeStatic(); }
-
-    var el = now - t0;
-    var dt = Math.min(0.05, (el - S.lastEl) / 1000);
-    S.lastEl = el;
-    S.clock = el;
-
-    if(!S.introDone){
-      S.t = cl01(el / CFG.DUR_INTRO);
-      if(S.t >= 1) S.introDone = true;
-    }
-    var t = S.introDone ? 1 : S.t;
-
-    /* --- 入场 --- */
-    var axisE = easeOutCubic(cl01((t - CFG.T_AXIS) / 0.16));
-    axisL.material.opacity = 0.40 * axisE;
-    axisR.material.opacity = 0.40 * axisE;
-    axisMid.material.opacity = 0.34 * axisE;
-
-    var dropP = cl01((t - CFG.T_DROP) / 0.48);
-    var dropE = easeOutExpo(dropP);
-
-    if(!S.introDone){
-      // 从画面外吸附落位
-      stableGroup.position.x = L.shift + (STABLE_X - 7.0 * (1 - dropE)) * L.scale;
-      convexGroup.position.x = L.shift + (CONVEX_X + 8.5 * (1 - dropE)) * L.scale;
-      stableMat.opacity = 0.94 * cl01(dropP * 1.7);
-      coneMat.opacity   = 0.98 * cl01((dropP - 0.10) * 1.8);
-      glowMat.opacity   = 0.26 * cl01((dropP - 0.10) * 1.8);
-
-      // 锁定一顿：极短回弹
-      var lockP = cl01((t - CFG.T_LOCK) / 0.12);
-      var kick = lockP > 0 ? Math.sin(lockP * Math.PI) * 0.05 : 0;
-      stableGroup.position.x -= kick * L.scale;
-      convexGroup.position.x += kick * L.scale * 1.5;
-    }
-
-    dustUni.uTime.value  = el;
-    dustUni.uAlpha.value = 0.52 * cl01((t - 0.45) / 0.35);
-    needleMat.opacity    = 0.42 * cl01((t - 0.60) / 0.28);
-    caretMat.opacity     = 0.34 * cl01((t - 0.66) / 0.28);
-
-    /* --- 待机循环 --- */
-    if(S.introDone){
-      S.impactGap += dt * 1000;
-      if(S.impactGap > CFG.IMPACT_GAP){ S.impactGap = 0; spawnImpact(); }
-      updateImpacts(dt);
-
-      // 凸性端脉冲
-      var sum = 0, lift = 0;
-      for(var p = S.pulses.length - 1; p >= 0; p--){
-        var pl = S.pulses[p];
-        pl.t += dt * 1000;
-        var kk = pl.t / pl.dur;
-        if(kk >= 1){ S.pulses.splice(p, 1); continue; }
-        var e = Math.sin(kk * Math.PI);
-        sum += e; lift += e * 0.22;
-      }
-      glowMat.opacity = 0.26 + Math.min(1.15, sum * 1.05);
-      convexGroup.position.y = lift * L.scale;
-      coneMesh.scale.set(1 + sum * 0.09, 1 + sum * 0.05, 1 + sum * 0.09);
-
-      // 稳健端：被吸收后只有极微亮度抖动
-      S.stableFlash = Math.max(0, S.stableFlash - dt * 1.8);
-      stableMat.opacity = 0.94 + S.stableFlash * 0.035;
-
-      // 游标：极小幅横移后回正（再平衡暗示），不旋转
-      var drift = Math.sin(el * 0.00029) * 0.46 * L.scale;
-      needleGroup.position.x = L.shift + drift;
-
-      // 缓慢再平衡：0.4% 的重心微移（不旋转）
-      var rebal = Math.sin(el * 0.00021) * 0.014;
-      stableGroup.position.x = L.shift + (STABLE_X + rebal) * L.scale;
-      convexGroup.position.x = L.shift + (CONVEX_X - rebal * 1.3) * L.scale;
-    }else{
-      updateImpacts(dt);
-    }
-
-    renderer.render(scene, camera);
-    if(visible) requestAnimationFrame(frame);
-  }
-
-  /* =======================  事件与清理  ======================= */
-  var rt;
-  window.addEventListener('resize', function(){
-    clearTimeout(rt);
-    rt = setTimeout(function(){ L.ready = false; }, 120);
-  }, { passive: true });
-
-  document.addEventListener('visibilitychange', function(){
-    if(document.hidden){
-      visible = false;
-    }else if(!visible && running){
-      visible = true;
-      requestAnimationFrame(frame);
-    }
-  });
-
-  var disposed = false;
-  function dispose(){
-    if(disposed) return;
-    disposed = true;
-    running = false; visible = false;
-    try{
-      trash.forEach(function(o){
-        if(o.geometry) o.geometry.dispose();
-        if(o.material){
-          if(o.material.map) o.material.map.dispose();
-          if(o.material.uniforms) Object.keys(o.material.uniforms).forEach(function(k){
-            var v = o.material.uniforms[k].value;
-            if(v && v.dispose) v.dispose();
-          });
-          o.material.dispose();
-        }
-      });
-      renderer.dispose();
-      if(renderer.forceContextLoss) renderer.forceContextLoss();
-    }catch(e){}
-    trash.length = 0;
-  }
-  window.addEventListener('pagehide', dispose);
-  window.addEventListener('beforeunload', dispose);
-
-  /* =======================  区块入场（独立于 canvas）  ======================= */
-  // 必须与 Hero 动画解耦：WebGL 失败或 reduced-motion 时页面下半部仍要可见
-  (function initReveal(){
-    var items = document.querySelectorAll('.reveal');
-    if(!items.length) return;
-    if(reduced || !('IntersectionObserver' in window)){
-      for(var i = 0; i < items.length; i++) items[i].classList.add('in');
-      return;
-    }
-    var io = new IntersectionObserver(function(entries){
-      for(var j = 0; j < entries.length; j++){
-        if(entries[j].isIntersecting){
-          entries[j].target.classList.add('in');
-          io.unobserve(entries[j].target);
-        }
-      }
-    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.05 });
-    for(var k = 0; k < items.length; k++) io.observe(items[k]);
-  })();
-
-  /* =======================  启动 / reduced-motion  ======================= */
-  if(!layout()) return;
-  placeStatic();
-
-  if(reduced){
-    // 静态构图：只渲染一帧，不跑循环
-    axisL.material.opacity = 0.40;
-    axisR.material.opacity = 0.40;
-    axisMid.material.opacity = 0.34;
-    stableMat.opacity = 0.94;
-    coneMat.opacity = 0.98;
-    glowMat.opacity = 0.26;
-    dustUni.uAlpha.value = 0.52;
-    needleMat.opacity = 0.42;
-    caretMat.opacity = 0.34;
-    renderer.render(scene, camera);
-    return;
-  }
-
-  // 只读调试钩子（?debug=1 时启用，不影响正常渲染）
-  if(new URLSearchParams(location.search).has('debug')){
-    window.__heroDebug = function(){
-      return {
-        introDone: S.introDone,
-        t: +S.t.toFixed(3),
-        scale: +L.scale.toFixed(3),
-        shift: +L.shift.toFixed(2),
-        impacts: imp.map(function(o){
-          return { on: o.on, x: +o.x.toFixed(2), y: +o.y.toFixed(2),
-                   vx: +o.vx.toFixed(2), age: +o.age.toFixed(2), side: o.side };
-        }),
-        pulses: S.pulses.length,
-        stableX: +stableGroup.position.x.toFixed(2),
-        convexX: +convexGroup.position.x.toFixed(2)
-      };
-    };
-  }
-
-  // 初始：两端在画面外
-  stableGroup.position.x = L.shift + (STABLE_X - 7.0) * L.scale;
-  convexGroup.position.x = L.shift + (CONVEX_X + 8.5) * L.scale;
-  requestAnimationFrame(frame);
-
+  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.05 });
+  for(var k = 0; k < items.length; k++) io.observe(items[k]);
 })();
 
 /* ============================================================
