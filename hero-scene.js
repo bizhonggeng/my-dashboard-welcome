@@ -1674,6 +1674,35 @@
     parallaxGroup.rotation.y = pointerCurrentY;
     parallaxGroup.rotation.z = breathRoll;
 
+    // 17.2b 天平式再平衡摆动
+    // CONFIG 里的 seesaw* 参数一直是死配置（定义了但代码从未引用），
+    // 这里真正接上：主梁绕中心枢轴做低频倾摆，带动两端反向上/下，
+    // 左端（重）附加缓慢阻尼沉降，右端（轻）附加弹性跳动 —— 左稳右灵。
+    // 摆动角叠加到 barbellGroup 的 Z 轴上，绕中心枢轴产生真实跷跷板效应。
+    var seesawAmp = CONFIG.animation.seesawAmplitudeRad;
+    var seesawPeriod = Math.max(0.5, CONFIG.animation.seesawPeriodSeconds);
+    var seesawAngle = isReducedMotion
+      ? 0
+      : Math.sin(elapsed * (Math.PI * 2 / seesawPeriod)) * seesawAmp;
+
+    // 开场期间摆动幅度收敛（大尺寸中央展开时不宜晃动，归位后进入稳定呼吸）
+    var smoothDockGlobal = currentDockProgress < 0.5
+      ? 16 * Math.pow(currentDockProgress, 5)
+      : 1 - Math.pow(-2 * currentDockProgress + 2, 5) / 2;
+    var seesawGate = 0.35 + 0.65 * smoothDockGlobal;
+    seesawAngle *= seesawGate;
+
+    barbellGroup.rotation.z = currentBasePitchZ + seesawAngle;
+    // 两端附加垂直浮动：左端慢、幅度小；右端快、幅度大
+    var leftBob = isReducedMotion
+      ? 0
+      : Math.sin(elapsed * (Math.PI * 2 / seesawPeriod) - 0.6) * CONFIG.animation.seesawLeftBobAmp * seesawGate;
+    var rightBob = isReducedMotion
+      ? 0
+      : Math.sin(elapsed * (Math.PI * 2 / seesawPeriod) * 1.14 + 0.35) * CONFIG.animation.seesawRightBobAmp * seesawGate;
+    leftPoleGroup.position.y = leftBob;
+    rightPoleGroup.position.y = rightBob;
+
     // 17.3 左极：大型压舱石（极低频、稳重、匀速自转 + 陀螺仪正交守护）
     var lSpeed = CONFIG.animation.leftSpinSpeed * introBoost;
     leftCoreMesh.rotation.y = elapsed * lSpeed;
