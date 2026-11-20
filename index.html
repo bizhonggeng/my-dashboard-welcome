@@ -5,14 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>投资监控 Dashboard — 杠铃策略的监视器</title>
 <meta name="description" content="一个只做告知、不做执行的杠铃策略投资监控系统：左侧全天候稳健，右侧凸性机会，中间不预测。">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230B1220'/><circle cx='9' cy='16' r='5' fill='%234A7DFF'/><circle cx='23' cy='16' r='6.5' fill='%23F0B429'/><rect x='13' y='15.2' width='6' height='1.6' fill='%2394A3B8'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230B1220'/><circle cx='9.5' cy='16' r='6.5' fill='%234A7DFF'/><circle cx='24' cy='16' r='4' fill='%23F0B429'/><rect x='17' y='15.3' width='4.2' height='1.4' fill='%2394A3B8'/></svg>">
 <script>
-/* 主题初始化：必须在 CSS 之前执行，避免首屏闪色（FOUC）
-   三态：auto（跟随系统）/ light / dark
-   存储键与主站隔离，互不影响 */
+/* 主题初始化：必须在 CSS 之前执行，避免首屏闪色（FOUC） */
 (function(){
   try {
-    var pref = localStorage.getItem('welcome-theme') || 'auto';
+    var urlTheme = (location.search.match(/[?&]theme=(light|dark)/) || [])[1];
+    var pref = urlTheme || localStorage.getItem('welcome-theme') || 'auto';
     var sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     var theme = pref === 'auto' ? (sysDark ? 'dark' : 'light') : pref;
     document.documentElement.setAttribute('data-theme', theme);
@@ -25,38 +24,56 @@
 </script>
 <style>
 /* ============================================================
-   投资监控 Dashboard 欢迎页
-   零外部依赖：无 CDN、无外部字体、无外部图片、无视频文件
-   所有图形为内联 SVG，所有样式在本文件内
+   投资监控 Dashboard 欢迎页 — 精密战术仪表风格 (Tactical Precision UI)
+   零外部依赖：无 CDN、无外部字体、无外部图片
    ============================================================ */
 
 :root{
-  --bg:#F7F9FC; --bg-soft:#FFFFFF; --card:#FFFFFF; --card-2:#F2F5FA;
-  --line:#E1E7F0; --text:#14202F; --text-2:#4E5F78; --text-3:#8494AB;
-  --left:#2E5FD4; --left-soft:rgba(46,95,212,.10);
-  --right:#B57800; --right-soft:rgba(181,120,0,.10);
-  --radius:14px;
+  --bg:#F7F9FC; --bg-soft:#FFFFFF;
+  --card:rgba(255,255,255,.84); --card-solid:#FFFFFF; --card-2:#EFF3F9;
+  --line:#DCE3EE; --line-strong:#C4D0E2;
+  --text:#14202F; --text-2:#4E5F78; --text-3:#8494AB;
+  --left:#2E5FD4; --left-soft:rgba(46,95,212,.11); --left-glow:rgba(46,95,212,.18);
+  --right:#B57800; --right-soft:rgba(181,120,0,.11); --right-glow:rgba(217,148,0,.18);
+  --zero:#0D8A5E; --zero-soft:rgba(13,138,94,.11);
+  --radius:16px;
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC",sans-serif;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
-  /* 头像纸底：与素描稿的 249 灰一致，深浅色下都用纸白，形成一致的"画框" */
   --paper:#F9F9F8;
+  --grid-line:rgba(20,32,47,.038);
+  --card-shadow:0 10px 30px -10px rgba(20,32,47,.06), 0 1px 2px rgba(20,32,47,.04);
+  --specular:rgba(255,255,255,.95);
 }
 [data-theme="dark"]{
-  --bg:#0B1220; --bg-soft:#111C30; --card:#131F36; --card-2:#182742;
-  --line:#22314E; --text:#E8EDF7; --text-2:#9FB0CC; --text-3:#6B7C9B;
-  --left:#4A7DFF; --left-soft:rgba(74,125,255,.14);
-  --right:#F0B429; --right-soft:rgba(240,180,41,.13);
+  --bg:#0B1220; --bg-soft:#101A2E;
+  --card:rgba(19,31,54,.76); --card-solid:#131F36; --card-2:#172642;
+  --line:#213252; --line-strong:#2F4772;
+  --text:#E8EDF7; --text-2:#9FB0CC; --text-3:#6B7C9B;
+  --left:#4A7DFF; --left-soft:rgba(74,125,255,.15); --left-glow:rgba(74,125,255,.26);
+  --right:#F0B429; --right-soft:rgba(240,180,41,.14); --right-glow:rgba(240,180,41,.24);
+  --zero:#2DD4BF; --zero-soft:rgba(45,212,191,.14);
   --paper:#F9F9F8;
+  --grid-line:rgba(159,176,204,.045);
+  --card-shadow:0 16px 36px -12px rgba(0,0,0,.48);
+  --specular:rgba(255,255,255,.09);
 }
-html{color-scheme:light}
+html{color-scheme:light;scroll-behavior:smooth}
 [data-theme="dark"]{color-scheme:dark}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 body{
-  background:var(--bg); color:var(--text); font-family:var(--font);
-  line-height:1.65; -webkit-font-smoothing:antialiased; font-size:16px;
+  background-color:var(--bg);
+  /* 全局精密坐标网格 + 双极环境光晕，打破单调平淡背景 */
+  background-image:
+    radial-gradient(circle at 18% 18%, var(--left-soft), transparent 42%),
+    radial-gradient(circle at 84% 14%, var(--right-soft), transparent 38%),
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size:100% 100%, 100% 100%, 48px 48px, 48px 48px;
+  background-attachment:fixed;
+  color:var(--text); font-family:var(--font);
+  line-height:1.6; -webkit-font-smoothing:antialiased; font-size:16px;
 }
 .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
 a{color:inherit;text-decoration:none}
@@ -68,343 +85,461 @@ header{
   border-bottom:1px solid var(--line);
 }
 @supports (backdrop-filter: blur(1px)){
-  header{background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  header{background:color-mix(in srgb, var(--bg) 82%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 }
-.nav{display:flex;align-items:center;justify-content:space-between;height:62px}
-.brand{display:flex;align-items:center;gap:9px;font-weight:650;font-size:15px;letter-spacing:-.01em}
-.brand svg{width:22px;height:22px;flex:none}
-.ver{font-family:var(--mono);font-size:11px;color:var(--text-3);font-weight:400}
-.nav-links{display:flex;gap:26px;font-size:13.5px;color:var(--text-2)}
-.nav-links a{transition:color .2s}
+.nav{display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:680;font-size:15px;letter-spacing:-.01em}
+.brand svg{width:24px;height:24px;flex:none}
+.ver{
+  font-family:var(--mono);font-size:11px;color:var(--left);
+  background:var(--left-soft);padding:1px 7px;border-radius:99px;font-weight:500;
+}
+.nav-links{display:flex;gap:28px;font-size:13.5px;color:var(--text-2);font-weight:500}
+.nav-links a{transition:color .2s;position:relative}
 .nav-links a:hover{color:var(--text)}
-.nav-right{display:flex;align-items:center;gap:14px}
+.nav-right{display:flex;align-items:center;gap:12px}
 .btn{
   display:inline-flex;align-items:center;gap:7px;
-  padding:8px 17px;border-radius:9px;font-size:13.5px;font-weight:550;
-  border:1px solid transparent;transition:all .2s;cursor:pointer;white-space:nowrap;
+  padding:8px 17px;border-radius:10px;font-size:13.5px;font-weight:600;
+  border:1px solid transparent;transition:all .22s;cursor:pointer;white-space:nowrap;
 }
-.btn-primary{background:var(--text);color:var(--bg)}
-.btn-primary:hover{opacity:.86;transform:translateY(-1px)}
+.btn-primary{
+  background:var(--text);color:var(--bg);
+  box-shadow:0 4px 14px rgba(0,0,0,.14);
+}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
 @media (max-width:860px){.nav-links{display:none}}
 @media (max-width:520px){
   .nav{gap:8px}
   .brand span{font-size:13.5px;white-space:nowrap}
   .brand .ver{display:none}
   .theme-btn{width:32px;height:32px}
-  .nav-right .btn-primary{padding:8px 12px;font-size:12.5px}
+  .nav-right .btn-primary{padding:7px 12px;font-size:12.5px}
 }
 
 /* ---------- 主题切换按钮 ---------- */
 .theme-btn{
-  width:34px;height:34px;flex:none;border-radius:9px;
-  border:1px solid var(--line);background:transparent;color:var(--text-2);
+  width:34px;height:34px;flex:none;border-radius:10px;
+  border:1px solid var(--line);background:var(--card);color:var(--text-2);
   display:inline-flex;align-items:center;justify-content:center;
   cursor:pointer;transition:border-color .2s,color .2s,transform .2s;
   position:relative;
 }
 .theme-btn:hover{border-color:var(--text-3);color:var(--text)}
 .theme-btn:active{transform:scale(.94)}
-.theme-btn .ic{width:17px;height:17px;position:absolute;opacity:0;transition:opacity .18s ease}
-/* 按当前偏好显示对应图标：auto / light / dark */
+.theme-btn .ic{width:16px;height:16px;position:absolute;opacity:0;transition:opacity .18s ease}
 [data-theme-pref="auto"] .theme-btn .ic-auto,
 [data-theme-pref="light"] .theme-btn .ic-light,
 [data-theme-pref="dark"] .theme-btn .ic-dark{opacity:1}
 .theme-btn:focus-visible{outline:2px solid var(--left);outline-offset:2px}
 
-/* ---------- ① Hero：结构与信号 ---------- */
+/* ---------- ① Hero：3D 舞台与极简图形化配比 ---------- */
 .hero{
   position:relative;overflow:hidden;
-  min-height:min(88vh,780px);
+  min-height:min(86vh,740px);
   display:flex;align-items:center;
-  padding:0;
+  padding:48px 0 56px;
+  border-top:none;
 }
 #heroCanvas{
   position:absolute;inset:0;width:100%;height:100%;
   display:block;z-index:0;pointer-events:none;
-  opacity:0;                 /* 默认隐藏：等场景脚本接管后再显示 */
-  transition:opacity .8s ease;
+  opacity:0;
+  transition:opacity .22s ease;
 }
-/* 场景脚本就绪（自己给 body 加 .hero-ready）后，canvas 接管、占位退场 */
 body.hero-ready #heroCanvas{opacity:1}
-body.hero-ready .hero-stage{opacity:0;pointer-events:none}
+body.hero-ready .hero-stage{opacity:0;visibility:hidden;transition:none;pointer-events:none}
 
-/* 静态占位：动画未接入时的默认构图，深浅主题都成立 */
 .hero-stage{
   position:absolute;inset:0;z-index:0;
   display:flex;align-items:center;justify-content:flex-end;
   padding-right:clamp(16px,4vw,64px);
-  color:var(--text);          /* 轴线/游标用 currentColor，自动跟随主题 */
-  transition:opacity .8s ease;
+  color:var(--text);
+  opacity:0;
 }
-.hero-stage svg{
-  width:min(56%,860px);height:auto;
-  opacity:.96;
-}
-@media (max-width:860px){
-  .hero-stage{
-    inset:auto 0 auto 0;top:0;height:min(62vw,250px);
-    justify-content:center;padding-right:0;
-    transform:translateY(-18px);
-  }
-  .hero-stage svg{width:96%}
-}
-/* 深底：无论站点主题如何，这一块始终是深色舞台 */
-/* 背景跟随主题：浅色用页面底色，深色用页面深底色，不再写死 */
-.hero{
-  background:var(--bg);
-  --hero-fg:var(--text);
-  --hero-fg-2:var(--text-2);
-  --hero-fg-3:var(--text-3);
-}
-.hero .eyebrow{color:var(--hero-fg-3)}
-.hero .eyebrow::before{background:var(--hero-fg-3)}
-.hero h1{color:var(--hero-fg)}
-.hero h1 .accent{color:#F0B429}
-.hero p.lead{color:var(--hero-fg-2)}
-.hero p.sub{color:var(--hero-fg-3)}
+.hero-stage svg{width:min(56%,860px);height:auto;opacity:.96}
 
 .hero .wrap{position:relative;z-index:2;width:100%}
-.hero-copy{max-width:min(40%,520px)}
+.hero-copy{max-width:min(44%,480px)}
 
-/* 文案不得被 canvas 遮挡：整个文案区在更高层级，且 canvas 不吃事件 */
-.hero-cta{position:relative;z-index:3}
+.hero .eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text-2);
+  padding:4px 11px;border-radius:99px;
+  background:var(--card);border:1px solid var(--line);
+  margin-bottom:18px;
+  box-shadow:inset 0 1px 0 var(--specular);
+}
+.hero .eyebrow::before{
+  content:"";width:7px;height:7px;border-radius:50%;
+  background:var(--left);
+  box-shadow:0 0 8px var(--left);
+  animation:pulseDot 2.4s infinite ease-in-out;
+}
+@keyframes pulseDot{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.35);opacity:.65}
+}
+.hero h1{
+  color:var(--text);
+  font-size:clamp(1.75rem,2.7vw,2.42rem);
+  font-weight:750;line-height:1.24;letter-spacing:-.025em;
+  margin-bottom:14px;
+}
+.hero h1 .accent{
+  color:var(--right);
+  position:relative;
+}
+.hero p.lead{
+  color:var(--text-2);
+  font-size:15px;line-height:1.7;
+  margin-bottom:22px;
+}
 
-/* DOM 独立淡入，与 canvas 动画错峰（canvas 入场 3.4s，文案 0.9s 后开始） */
+/* 图形化杠铃仓位配比尺（以图代文：直观呈现 89% : 0% : 5% + FREE） */
+.barbell-meter{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:13px;
+  padding:13px 15px;
+  margin-bottom:24px;
+  box-shadow:var(--card-shadow), inset 0 1px 0 var(--specular);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.bm-head{
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:11px;color:var(--text-3);
+  margin-bottom:8px;
+}
+.bm-head strong{color:var(--text);font-weight:600}
+.bm-track{
+  display:grid;grid-template-columns:5.2fr 1.6fr 1.1fr 1.1fr;gap:5px;
+  height:10px;align-items:center;margin-bottom:9px;
+}
+.bm-seg{height:100%;border-radius:4px;position:relative;overflow:hidden}
+.bm-left{background:linear-gradient(90deg, var(--left), #6B96FF)}
+.bm-mid{
+  border:1px dashed var(--text-3);opacity:.38;
+  background:repeating-linear-gradient(45deg,transparent,transparent 3px,var(--line) 3px,var(--line) 6px);
+}
+.bm-right{background:linear-gradient(90deg, var(--right), #FFD166)}
+.bm-zero{background:var(--zero);opacity:.85}
+.bm-legend{
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;
+  font-family:var(--mono);font-size:11px;
+}
+.bm-item{display:inline-flex;align-items:center;gap:5px;color:var(--text-2)}
+.bm-item i{width:7px;height:7px;border-radius:2px;display:inline-block}
+.bm-item b{color:var(--text);font-weight:650}
+
+.hero-cta{
+  position:relative;z-index:3;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.hero-cta .btn-primary{padding:11px 24px;font-size:14px;border-radius:11px}
+.hero-cta .btn-ghost{
+  padding:10px 17px;font-size:13.5px;border-radius:11px;
+  border:1px solid var(--line);background:var(--card);color:var(--text-2);
+}
+.hero-cta .btn-ghost:hover{border-color:var(--text-3);color:var(--text)}
+
+/* DOM 独立淡入：开场居中动画期间（未加 hero-docked 前）页面无任何文字，收缩归位至顶端时平滑浮现 */
+header{opacity:0}
 .h1-in,.h2-in,.h3-in{opacity:0;transform:translateY(10px)}
-.hero.on .h1-in{animation:heroIn .70s cubic-bezier(.22,.9,.28,1) .25s forwards}
-.hero.on .h2-in{animation:heroIn .70s cubic-bezier(.22,.9,.28,1) .55s forwards}
-.hero.on .h3-in{animation:heroIn .66s cubic-bezier(.22,.9,.28,1) .85s forwards}
+body.hero-docked header{animation:heroIn .55s cubic-bezier(.22,.9,.28,1) .02s forwards}
+body.hero-docked .h1-in{animation:heroIn .62s cubic-bezier(.22,.9,.28,1) .08s forwards}
+body.hero-docked .h2-in{animation:heroIn .62s cubic-bezier(.22,.9,.28,1) .24s forwards}
+body.hero-docked .h3-in{animation:heroIn .60s cubic-bezier(.22,.9,.28,1) .40s forwards}
 @keyframes heroIn{to{opacity:1;transform:translateY(0)}}
 
 @media (max-width:860px){
   .hero{
-    min-height:auto;
-    padding:calc(min(62vw,250px) + 6px) 0 40px;
+    min-height:calc(100vh - 60px);
+    padding:calc(min(62vw,246px) + 10px) 0 36px;
     align-items:flex-start;
   }
-  #heroCanvas{top:0;bottom:auto;height:min(62vw,250px)}
+  /* 移动端 canvas 铺满整块首屏：开场时 3D 居中全屏展示，随后平滑收缩至顶端 246px 区域 */
+  #heroCanvas{inset:0;width:100%;height:100%}
+  .hero-stage{
+    inset:auto 0 auto 0;top:0;height:min(62vw,246px);
+    justify-content:center;padding-right:0;
+  }
   .hero-copy{max-width:100%}
-  .hero h1{font-size:clamp(1.55rem,6.4vw,2.1rem)}
-  .hero p.lead{font-size:14.5px}
+  .hero h1{font-size:clamp(1.52rem,6vw,2rem)}
+  .hero p.lead{font-size:14px;margin-bottom:16px}
+  .barbell-meter{padding:11px 13px;margin-bottom:18px}
 }
 
 @media (prefers-reduced-motion:reduce){
-  .h1-in,.h2-in,.h3-in{opacity:1;transform:none;animation:none}
+  header,.h1-in,.h2-in,.h3-in{opacity:1;transform:none;animation:none}
+  .hero .eyebrow::before{animation:none}
 }
 
-/* ---------- 通用 section ---------- */
-section{padding:72px 0;border-top:1px solid var(--line)}
-.sec-head{margin-bottom:44px;max-width:62ch}
-.sec-num{font-family:var(--mono);font-size:12px;color:var(--text-3);letter-spacing:.06em;margin-bottom:12px;display:block}
-h2{font-size:clamp(1.4rem,2.6vw,1.95rem);font-weight:680;letter-spacing:-.02em;margin-bottom:12px;line-height:1.3}
-.sec-head p{color:var(--text-2);font-size:15px}
-
-/* ---------- ② 设计哲学 ---------- */
-.philosophy{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.phil-card{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  padding:26px 22px;display:flex;flex-direction:column;gap:14px;
-  transition:border-color .25s,transform .25s;
+/* ---------- 通用 Section 与卡片基底 ---------- */
+section{padding:64px 0;border-top:1px solid var(--line);position:relative}
+@media (max-width:860px){section{padding:44px 0}}
+.sec-head{
+  margin-bottom:32px;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
 }
-.phil-card:hover{border-color:var(--text-3);transform:translateY(-2px)}
-.phil-card.mid{background:var(--card-2)}
-.phil-icon{width:46px;height:46px}
-.phil-card h3{font-size:16px;font-weight:640;letter-spacing:-.01em}
-.phil-card .tag{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:5px;align-self:flex-start;font-weight:500}
+.sec-title-group{max-width:54ch}
+.sec-num{
+  font-family:var(--mono);font-size:11.5px;color:var(--left);
+  letter-spacing:.08em;margin-bottom:8px;display:inline-flex;align-items:center;gap:6px;
+  font-weight:600;
+}
+h2{font-size:clamp(1.38rem,2.4vw,1.82rem);font-weight:720;letter-spacing:-.02em;line-height:1.28}
+.sec-sub{color:var(--text-2);font-size:14px;margin-top:6px}
+
+/* ---------- ② 01 / 设计哲学：纯图形化三态收益分布蓝图 ---------- */
+.dist-fig{
+  display:grid;grid-template-columns:1.1fr .75fr 1.1fr;gap:16px;
+}
+.dist-panel{
+  padding:22px 20px 18px;border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--card);display:flex;flex-direction:column;gap:12px;
+  box-shadow:var(--card-shadow), inset 0 1px 0 var(--specular);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  position:relative;overflow:hidden;
+  transition:transform .22s, border-color .22s;
+}
+.dist-panel:hover{transform:translateY(-2px);border-color:var(--line-strong)}
+.dist-left{border-top:2px solid var(--left)}
+.dist-right{border-top:2px solid var(--right)}
+.dist-mid{
+  background:color-mix(in srgb, var(--card) 55%, transparent);
+  border-style:dashed;
+  align-items:center;text-align:center;
+}
+.dist-top{
+  display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px;
+}
+.tag{
+  font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:6px;
+  font-weight:600;letter-spacing:.02em;
+}
 .tag-left{background:var(--left-soft);color:var(--left)}
 .tag-right{background:var(--right-soft);color:var(--right)}
 .tag-mid{background:var(--card-2);color:var(--text-3);border:1px solid var(--line)}
-.phil-card p{font-size:13.5px;color:var(--text-2);line-height:1.7}
-.phil-card p strong{color:var(--text);font-weight:600}
-@media (max-width:860px){.philosophy{grid-template-columns:1fr}}
+.tag-zero{background:var(--zero-soft);color:var(--zero)}
+.dist-metric{font-family:var(--mono);font-size:11.5px;color:var(--text-2);font-weight:600}
 
-/* ---------- 双分布对比图（设计哲学） ---------- */
-.dist-fig{
-  display:grid;grid-template-columns:1fr .62fr 1fr;gap:14px;
-  margin-bottom:26px;
-}
-.dist-panel{
-  padding:20px 20px 16px;border:1px solid var(--line);border-radius:var(--radius);
-  background:var(--card);display:flex;flex-direction:column;gap:12px;
-  color:var(--text-3);align-items:flex-start;
-}
-.dist-panel .tag{align-self:flex-start}
-.dist-svg{align-self:stretch}
-.dist-mid{
-  background:transparent;border-style:dashed;
-  align-items:center;justify-content:center;text-align:center;
-}
-.dist-mid .tag{align-self:center}
-.dist-svg{width:100%;height:96px;display:block}
+.dist-svg{width:100%;height:106px;display:block}
 .dist-axis{
   display:flex;justify-content:space-between;font-family:var(--mono);
-  font-size:10.5px;color:var(--text-3);letter-spacing:.02em;
-  align-self:stretch;width:100%;
+  font-size:10.5px;color:var(--text-3);width:100%;
 }
-.dist-axis .dist-mid{color:var(--text-3);opacity:.7;background:none;border:0}
-.dist-axis .dist-hi{color:var(--right)}
-.dist-cap{font-size:12.5px;line-height:1.65;color:var(--text-2);margin:0;align-self:stretch}
-.dist-cap strong{color:var(--text);font-weight:600}
-.dist-empty{flex:1;display:flex;align-items:center;justify-content:center;min-height:96px}
-.dist-x{width:44px;height:44px;color:var(--text-3);opacity:.35}
+.dist-axis .dist-hi{color:var(--right);font-weight:600}
+.dist-cap{font-size:13px;line-height:1.55;color:var(--text-2);margin:0}
+.dist-cap strong{color:var(--text);font-weight:650}
 
-/* 深色下提高面积填充的可见度（否则在深底上像空洞） */
+.dist-chips{
+  display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:4px;
+}
+.dist-mid .dist-chips{justify-content:center}
+.chip{
+  font-family:var(--mono);font-size:10.5px;color:var(--text-2);
+  background:var(--card-2);border:1px solid var(--line);
+  padding:2px 8px;border-radius:5px;
+}
 [data-theme="dark"] .dist-fill-left{fill:rgba(74,125,255,.26)}
 [data-theme="dark"] .dist-fill-right{fill:rgba(240,180,41,.24)}
 
-/* 三条精简说明 */
-.phil-notes{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.phil-note{
-  padding:18px 20px;border-left:2px solid var(--line);
-  display:flex;flex-direction:column;gap:8px;
-}
-.phil-note:first-child{border-left-color:var(--left)}
-.phil-note:nth-child(2){border-left-color:var(--text-3);opacity:.8}
-.phil-note:last-child{border-left-color:var(--right)}
-.phil-note h3{font-size:14.5px;font-weight:640;letter-spacing:-.01em}
-.phil-note p{font-size:12.8px;line-height:1.75;color:var(--text-2);margin:0}
-.phil-note p strong{color:var(--text);font-weight:600}
-.phil-note .tag{align-self:flex-start}
-
 @media (max-width:860px){
   .dist-fig{grid-template-columns:1fr;gap:12px}
-  .dist-mid{flex-direction:row;gap:14px;padding:14px 18px;align-items:center}
-  .dist-mid .tag{white-space:nowrap;flex:0 0 auto}
-  .dist-empty{min-height:0;flex:0 0 auto}
-  .dist-x{width:26px;height:26px}
-  .dist-svg{height:88px}
-  .phil-notes{grid-template-columns:1fr}
+  .dist-panel{padding:16px 16px 14px;gap:10px}
+  .dist-svg{height:84px}
 }
 
-/* ---------- 功能页：缩略图式卡片 ---------- */
-.pages{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.page-card{
-  padding:0;overflow:hidden;background:var(--card);border:1px solid var(--line);
-  border-radius:var(--radius);transition:border-color .18s,transform .18s;
-  display:flex;flex-direction:column;
+/* ---------- ③ 02 / 思想来源：可视化自动轮播 + 进度条 + 思想家快切标签 ---------- */
+.thought-wrap{display:flex;flex-direction:column;gap:12px}
+.thinker-tabs{
+  display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;
+  scrollbar-width:none;
 }
-.page-card:hover{border-color:var(--text-3);transform:translateY(-2px)}
-.page-thumb{
-  height:96px;background:var(--card-2);border-bottom:1px solid var(--line);
-  display:flex;align-items:center;justify-content:center;position:relative;
-  overflow:hidden;
+.thinker-tabs::-webkit-scrollbar{display:none}
+.t-tab{
+  flex:none;display:inline-flex;align-items:center;gap:7px;
+  padding:6px 12px;border-radius:99px;
+  border:1px solid var(--line);background:var(--card);
+  color:var(--text-2);font-size:12px;font-weight:550;
+  cursor:pointer;transition:all .2s;
 }
-.page-thumb svg{width:100%;height:100%;opacity:.9}
-.page-body{padding:13px 15px 15px;display:flex;flex-direction:column;gap:6px}
-.page-card h3{font-size:13.5px;font-weight:630;letter-spacing:-.01em}
-.page-card p{font-size:12px;color:var(--text-2);line-height:1.6;margin:0}
-.page-group{
-  grid-column:1/-1;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--text-3);padding:14px 0 2px;
-  border-bottom:1px solid var(--line);margin-bottom:2px;
+.t-tab:hover{border-color:var(--text-3);color:var(--text)}
+.t-tab.on{
+  border-color:var(--left);background:var(--left-soft);color:var(--text);
+  box-shadow:0 0 12px var(--left-soft);
 }
-.page-group:first-child{margin-top:0;padding-top:0}
-@media (max-width:900px){.pages{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:600px){.pages{grid-template-columns:1fr};  .page-thumb{height:84px}}
+.t-tab .t-tag{
+  font-family:var(--mono);font-size:10.5px;color:var(--text-3);
+}
+.t-tab.on .t-tag{color:var(--left)}
 
-/* ---------- 边界：对比式排版 ---------- */
-.donts{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-.dont{
-  display:flex;gap:14px;padding:20px 22px;
-  border-right:1px solid var(--line);border-bottom:1px solid var(--line);
-  background:var(--card);
-}
-.dont:nth-child(2n){border-right:0}
-.dont:nth-last-child(-n+2){border-bottom:0}
-.dont-mark{
-  flex:0 0 auto;width:22px;height:22px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;line-height:1;color:var(--text-3);
-  border:1px solid var(--line);font-weight:600;
-}
-.dont h3{font-size:14px;font-weight:630;margin-bottom:5px;letter-spacing:-.01em}
-.dont p{font-size:12.5px;line-height:1.7;color:var(--text-2);margin:0}
-@media (max-width:700px){
-  .donts{grid-template-columns:1fr}
-  .dont{border-right:0}
-  .dont:nth-last-child(2){border-bottom:1px solid var(--line)}
-}
-
-
-/* ---------- ③ 思想来源 ---------- */
 .thought{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  padding:38px 40px;position:relative;min-height:200px;
+  padding:32px 36px;position:relative;overflow:hidden;
   display:flex;align-items:center;gap:32px;
+  box-shadow:var(--card-shadow), inset 0 1px 0 var(--specular);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
 }
-.quote-body{flex:1;min-width:0}
+/* 顶部自动轮播实时进度条：直观感知正在轮播 */
+.quote-progress-track{
+  position:absolute;top:0;left:0;right:0;height:2.5px;
+  background:var(--line);overflow:hidden;
+}
+.quote-progress-bar{
+  height:100%;width:0%;
+  background:linear-gradient(90deg, var(--left), var(--right));
+  transition:width .1s linear;
+}
+.quote-watermark{
+  position:absolute;top:10px;left:22px;
+  font-family:Georgia,serif;font-size:96px;line-height:1;
+  color:var(--text-3);opacity:.08;pointer-events:none;user-select:none;
+}
+.quote-body{flex:1;min-width:0;position:relative;z-index:1}
 .quote-text{
-  font-size:clamp(1.05rem,2.1vw,1.4rem);line-height:1.55;font-weight:480;
-  letter-spacing:-.015em;margin-bottom:18px;transition:opacity .45s ease;
+  font-size:clamp(1.05rem,2vw,1.34rem);line-height:1.5;font-weight:550;
+  letter-spacing:-.015em;margin-bottom:10px;
+  transition:opacity .32s ease, transform .32s ease;
 }
-.quote-text::before{content:"\201C";color:var(--text-3)}
-.quote-text::after{content:"\201D";color:var(--text-3)}
-.quote-meta{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;transition:opacity .45s ease}
-.quote-name{font-weight:640;font-size:14.5px}
-.quote-src{font-size:12.5px;color:var(--text-3);font-family:var(--mono)}
-/* 中文译文：比原文小一档、颜色淡一档，作为释义而非并列主张 */
 .quote-zh{
-  font-size:clamp(.9rem,1.55vw,1.02rem);line-height:1.75;
-  color:var(--text-2);letter-spacing:.005em;margin:-10px 0 18px;
-  transition:opacity .45s ease;
+  font-size:clamp(.9rem,1.5vw,1rem);line-height:1.65;
+  color:var(--text-2);margin-bottom:16px;
+  transition:opacity .32s ease, transform .32s ease;
 }
+.quote-meta{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+}
+.quote-author{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;transition:opacity .32s ease}
+.quote-name{font-weight:680;font-size:14px}
+.quote-src{font-size:12px;color:var(--text-3);font-family:var(--mono)}
 .quote-portrait{
-  flex:none;width:150px;border-radius:12px;overflow:hidden;
-  transition:opacity .45s ease;background:var(--paper);
-  box-shadow:0 6px 20px rgba(0,0,0,.16);
-  border:1px solid rgba(0,0,0,.06);
+  flex:none;width:136px;border-radius:12px;overflow:hidden;
+  transition:opacity .32s ease, transform .32s ease;background:var(--paper);
+  box-shadow:0 8px 22px rgba(0,0,0,.18);
+  border:1px solid rgba(0,0,0,.08);
 }
 .quote-portrait .p-img{display:block;width:100%;height:auto;aspect-ratio:440/550}
-@media (max-width:700px){
-  .quote-portrait{width:112px}
-}
-.quote-nav{display:flex;align-items:center;gap:10px;margin-top:22px}
-.dots{display:flex;gap:7px}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--line);border:none;padding:0;cursor:pointer;transition:all .25s}
-.dot.on{background:var(--text-2);width:20px;border-radius:4px}
+.quote-nav{display:flex;align-items:center;gap:8px}
 .arrow{
-  width:30px;height:30px;border-radius:8px;border:1px solid var(--line);
-  background:transparent;color:var(--text-2);cursor:pointer;
+  width:28px;height:28px;border-radius:7px;border:1px solid var(--line);
+  background:var(--card-2);color:var(--text-2);cursor:pointer;
   display:flex;align-items:center;justify-content:center;transition:all .2s;
 }
 .arrow:hover{border-color:var(--text-3);color:var(--text)}
+
 @media (max-width:700px){
-  .thought{flex-direction:column-reverse;padding:28px 24px;gap:20px}
-  .quote-portrait{width:132px;align-self:flex-start}
+  .thought{padding:22px 18px;gap:16px;align-items:flex-start}
+  .quote-portrait{width:84px;border-radius:10px}
+  .quote-text{font-size:1rem}
+  .quote-zh{font-size:.88rem;margin-bottom:12px}
 }
 
-/* ---------- ④ 页面 ---------- */
-.pages{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.page-card{
+/* ---------- ④ 03 / 功能架构：4 卡片视觉化 Bento 仪表矩阵（少字多图） ---------- */
+.bento-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:16px;
+}
+.bento-card{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  padding:22px;transition:border-color .25s,transform .25s;
+  overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:var(--card-shadow), inset 0 1px 0 var(--specular);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:transform .24s, border-color .24s, box-shadow .24s;
+  position:relative;
 }
-.page-card:hover{border-color:var(--text-3);transform:translateY(-2px)}
-.page-top{display:flex;align-items:center;gap:12px;margin-bottom:11px}
-.page-top svg{width:30px;height:30px;flex:none}
-.page-card h3{font-size:14.5px;font-weight:630;letter-spacing:-.01em}
-.page-card p{font-size:13px;color:var(--text-2);line-height:1.65}
-.page-group{
-  grid-column:1/-1;font-family:var(--mono);font-size:11.5px;color:var(--text-3);
-  letter-spacing:.07em;text-transform:uppercase;margin:14px 0 2px;
-}
-.page-group:first-child{margin-top:0}
-@media (max-width:900px){.pages{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:600px){.pages{grid-template-columns:1fr}}
+.bento-card:hover{transform:translateY(-3px);border-color:var(--line-strong)}
+.bento-card.b-left:hover{box-shadow:0 14px 34px -10px var(--left-glow)}
+.bento-card.b-right:hover{box-shadow:0 14px 34px -10px var(--right-glow)}
 
-/* ---------- ⑤ 边界（样式见上文 .donts 对比式排版） ---------- */
+.bento-visual{
+  height:164px;background:var(--card-2);border-bottom:1px solid var(--line);
+  position:relative;display:flex;align-items:center;justify-content:center;
+  padding:16px;overflow:hidden;
+}
+.bento-visual svg{width:100%;height:100%;max-width:440px}
+.bento-badge{
+  position:absolute;top:12px;left:14px;
+  font-family:var(--mono);font-size:10.5px;font-weight:600;
+  padding:3px 9px;border-radius:6px;letter-spacing:.03em;
+}
+.bento-stat{
+  position:absolute;top:12px;right:14px;
+  font-family:var(--mono);font-size:10.5px;color:var(--text-3);
+  background:var(--card);border:1px solid var(--line);
+  padding:2px 8px;border-radius:5px;
+}
+.bento-body{padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.bento-body h3{font-size:15.5px;font-weight:680;letter-spacing:-.01em}
+.bento-body p{font-size:13px;color:var(--text-2);line-height:1.55;margin:0}
+.bento-modules{
+  display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;
+}
+.mod-pill{
+  font-family:var(--mono);font-size:11px;color:var(--text);
+  background:var(--card-2);border:1px solid var(--line);
+  padding:3px 9px;border-radius:6px;font-weight:500;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.mod-pill i{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.75}
+
+/* SVG 钟摆微动效：以局部原点 (0,0) 为绝对圆心旋转 */
+@keyframes pendulumSwing{
+  0%,100%{transform:rotate(-32deg)}
+  50%{transform:rotate(18deg)}
+}
+.svg-pendulum{transform-origin:0px 0px;animation:pendulumSwing 5.2s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.svg-pendulum{animation:none}}
+
+@media (max-width:860px){
+  .bento-grid{grid-template-columns:1fr;gap:12px}
+  .bento-visual{height:142px;padding:12px}
+  .bento-body{padding:14px 16px}
+}
+
+/* ---------- ⑤ 04 / 边界：四不原则图形化勋章条 ---------- */
+.donts-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+}
+.dont-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 16px;display:flex;flex-direction:column;gap:10px;
+  box-shadow:var(--card-shadow), inset 0 1px 0 var(--specular);
+  transition:border-color .2s, transform .2s;
+}
+.dont-card:hover{border-color:var(--line-strong);transform:translateY(-2px)}
+.dont-top{display:flex;align-items:center;justify-content:space-between}
+.dont-icon{
+  width:34px;height:34px;border-radius:9px;
+  background:var(--card-2);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;color:var(--text-2);
+}
+.dont-icon svg{width:18px;height:18px}
+.dont-tag{
+  font-family:var(--mono);font-size:10px;color:var(--text-3);
+  border:1px solid var(--line);padding:1px 6px;border-radius:4px;
+}
+.dont-card h3{font-size:14px;font-weight:660;letter-spacing:-.01em}
+.dont-card p{font-size:12.2px;color:var(--text-2);line-height:1.5;margin:0}
+
+@media (max-width:860px){
+  .donts-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .dont-card{padding:14px 13px;gap:7px}
+  .dont-card h3{font-size:13.2px}
+  .dont-card p{font-size:11.5px}
+}
 
 /* ---------- 页脚 ---------- */
 footer{
-  border-top:1px solid var(--line);padding:34px 0 44px;
+  border-top:1px solid var(--line);padding:30px 0 38px;
   display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
   font-size:12.5px;color:var(--text-3);
 }
 .foot-left{display:flex;align-items:center;gap:10px}
-.foot-left svg{width:18px;height:18px;opacity:.7}
-.foot-meta{display:flex;gap:18px;align-items:center;font-family:var(--mono);font-size:11.5px}
-/* 人像出处：默认折叠，不干扰阅读，但许可要求的内容必须在页面上 */
-.credits{margin:0 0 40px;font-size:11.5px;color:var(--text-3);line-height:1.75}
+.foot-left svg{width:18px;height:18px;opacity:.8}
+.foot-meta{display:flex;gap:16px;align-items:center;font-family:var(--mono);font-size:11.5px}
+.credits{margin:0 0 36px;font-size:11.5px;color:var(--text-3);line-height:1.7}
 .credits summary{cursor:pointer;user-select:none;font-size:11.5px;color:var(--text-3);transition:color .2s}
 .credits summary:hover{color:var(--text-2)}
 .credits ul{margin:10px 0 8px;padding-left:18px;display:grid;gap:3px}
@@ -412,23 +547,22 @@ footer{
 .credits em{font-style:normal;color:var(--text-2)}
 .credits p{margin-top:8px;font-size:11px;opacity:.85}
 
-
 /* ---------- 入场动画 ---------- */
-.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s ease}
 .reveal.in{opacity:1;transform:translateY(0)}
 @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
 </style>
 </head>
 <body>
 
-<!-- ========== 导航 ========== -->
+<!-- ========== 顶部导航 ========== -->
 <header>
   <div class="wrap nav">
     <div class="brand">
       <svg viewBox="0 0 32 32" fill="none">
-        <circle cx="9" cy="16" r="5" fill="#4A7DFF"/>
-        <circle cx="23" cy="16" r="6.5" fill="#F0B429"/>
-        <rect x="13" y="15.2" width="6" height="1.6" fill="#6B7C9B"/>
+        <circle cx="9.5" cy="16" r="6.5" fill="#4A7DFF"/>
+        <circle cx="24" cy="16" r="4" fill="#F0B429"/>
+        <rect x="17" y="15.3" width="4.2" height="1.4" fill="#6B7C9B"/>
       </svg>
       <span>投资监控 Dashboard</span>
       <span class="ver" id="ver1"></span>
@@ -436,8 +570,8 @@ footer{
     <nav class="nav-links">
       <a href="#philosophy">设计哲学</a>
       <a href="#thoughts">思想来源</a>
-      <a href="#pages">功能</a>
-      <a href="#boundary">边界</a>
+      <a href="#pages">系统架构</a>
+      <a href="#boundary">四不边界</a>
     </nav>
     <div class="nav-right">
       <button class="theme-btn" id="themeBtn" type="button" aria-label="切换主题">
@@ -460,367 +594,458 @@ footer{
   </div>
 </header>
 
-<!-- ========== ① Hero：three.js 循环动画 ========== -->
+<!-- ========== ① Hero：3D 双极再平衡场景 ========== -->
 <section class="hero" id="hero">
-  <!-- ============================================================
-       动画挂载点
-       设计模型产出的 three.js 场景应渲染到下面这个 canvas。
-       接入方式见 HERO-ANIM-SPEC.md；canvas 自带 inset:0 铺满整块，
-       且 pointer-events:none —— 不会吃掉 CTA 的点击。
-       ============================================================ -->
   <canvas id="heroCanvas" aria-hidden="true"></canvas>
 
-  <!-- 静态占位构图（动画接入后，给 body 加 .hero-ready 即可隐藏它） -->
+  <!-- WebGL 不可用时的静态矢量兜底 -->
   <div class="hero-stage" id="heroStage" aria-hidden="true">
     <svg viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid meet" role="presentation">
-      <defs>
-        <!-- 稳健端：圆柱的纵向明暗（上高光 / 下暗部 / 底部一条反光边） -->
-        <linearGradient id="cylGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stop-color="#454E5E"/>
-          <stop offset="9%"   stop-color="#98A2B2"/>
-          <stop offset="26%"  stop-color="#B6C0CE"/>
-          <stop offset="58%"  stop-color="#77818F"/>
-          <stop offset="88%"  stop-color="#3A4250"/>
-          <stop offset="100%" stop-color="#59636F"/>
-        </linearGradient>
-        <!-- 凸性端：上下两个面分开填，形成锐利的棱 -->
-        <linearGradient id="coneUp" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%"   stop-color="#E8AE2E"/>
-          <stop offset="100%" stop-color="#FFD166"/>
-        </linearGradient>
-        <linearGradient id="coneDown" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%"   stop-color="#8A6210"/>
-          <stop offset="100%" stop-color="#C99518"/>
-        </linearGradient>
-        <radialGradient id="tipGlow">
-          <stop offset="0%"   stop-color="#F0B429" stop-opacity=".55"/>
-          <stop offset="55%"  stop-color="#F0B429" stop-opacity=".14"/>
-          <stop offset="100%" stop-color="#F0B429" stop-opacity="0"/>
-        </radialGradient>
-      </defs>
-
-      <!-- 轴线：左段与右段实线，中段留空 -->
       <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-        <line x1="56"  y1="200" x2="512" y2="200" opacity=".38"/>
-        <line x1="698" y1="200" x2="1150" y2="200" opacity=".38"/>
+        <line x1="340" y1="220" x2="540" y2="205" opacity=".32"/>
+        <line x1="540" y1="205" x2="860" y2="180" stroke-dasharray="10 12" opacity=".28"/>
+        <line x1="860" y1="180" x2="1010" y2="168" opacity=".32"/>
       </g>
-      <!-- 中段：虚线真空带（禁入，不承载） -->
-      <line x1="512" y1="200" x2="698" y2="200"
-            stroke="currentColor" stroke-width="1.5"
-            stroke-dasharray="13 15" opacity=".30"/>
-
-      <!-- 稳健端：厚重哑光圆柱 -->
-      <g>
-        <rect x="132" y="122" width="258" height="156" rx="7" fill="url(#cylGrad)"/>
-        <!-- 顶缘一道极细的亮边，强化"实体"而不是"贴片" -->
-        <line x1="140" y1="127" x2="382" y2="127"
-              stroke="#D6DEE9" stroke-opacity=".30" stroke-width="2"/>
-        <!-- 底缘反光 -->
-        <line x1="140" y1="273" x2="382" y2="273"
-              stroke="#7E8A99" stroke-opacity=".35" stroke-width="1.5"/>
+      <g transform="translate(260,226)">
+        <circle cx="0" cy="0" r="112" fill="none" stroke="#4A7DFF" stroke-width="2" stroke-opacity=".45"/>
+        <circle cx="0" cy="0" r="88" fill="none" stroke="#4A7DFF" stroke-width="4" stroke-opacity=".75"/>
+        <polygon points="0,-68 59,-34 59,34 0,68 -59,34 -59,-34" fill="#4A7DFF" fill-opacity=".22" stroke="#4A7DFF" stroke-width="2"/>
       </g>
-
-      <!-- 凸性端：小而尖的自发光锥，上下两面取不同明度 -->
-      <g>
-        <circle cx="1082" cy="200" r="86" fill="url(#tipGlow)"/>
-        <polygon points="944,150 1082,200 944,200" fill="url(#coneUp)"/>
-        <polygon points="944,200 1082,200 944,250" fill="url(#coneDown)"/>
-        <line x1="944" y1="200" x2="1082" y2="200"
-              stroke="#FFE9A8" stroke-opacity=".55" stroke-width="1"/>
+      <g transform="translate(1035,165) rotate(-14)">
+        <ellipse cx="14" cy="0" rx="68" ry="26" fill="none" stroke="#F0B429" stroke-width="1.8" stroke-opacity=".7"/>
+        <polygon points="-22,0 0,-18 32,0 0,18" fill="#F0B429" stroke="#FFE08A" stroke-width="1.5"/>
       </g>
-
-      <!-- 再平衡游标：落在真空带中央，暗示重心位置 -->
-      <g stroke="currentColor" opacity=".30">
-        <line x1="605" y1="176" x2="605" y2="224" stroke-width="1.5"/>
-      </g>
-      <polygon points="598,170 612,170 605,179" fill="currentColor" opacity=".40"/>
     </svg>
   </div>
+
   <div class="wrap">
     <div class="hero-copy">
       <span class="eyebrow h1-in">Barbell Strategy Monitor</span>
       <h1 class="h1-in">它不是预测市场的工具，<br>是一台<span class="accent">杠铃的监视器</span>。</h1>
-      <p class="lead h2-in">左侧放全天候的稳健配置，右侧留少量仓位给损失有限、收益数倍的机会。中间那段——追逐热门、频繁调仓、预测点位——被刻意留空。</p>
-      <p class="sub h2-in">系统只做一件事：把当前所处的位置告诉你。它不判断该不该买，也不替你下单。</p>
+      <p class="lead h2-in">左侧重仓求稳，右侧轻仓求凸，中间放弃预测——系统只测量你当前所处的周期与赔率坐标，不猜涨跌、不替你下单。</p>
+
+      <!-- 图形化杠铃仓位配比刻度尺 -->
+      <div class="barbell-meter h2-in" aria-label="杠铃仓位结构配比">
+        <div class="bm-head">
+          <span>BARBELL ALLOCATION</span>
+          <strong>两头配置 · 中间归零</strong>
+        </div>
+        <div class="bm-track">
+          <div class="bm-seg bm-left" title="左侧稳健底仓 85%–95%"></div>
+          <div class="bm-seg bm-mid" title="中间预测波段 0%（留空）"></div>
+          <div class="bm-seg bm-right" title="右侧凸性期权 ~5%"></div>
+          <div class="bm-seg bm-zero" title="零成本打新 不占仓位"></div>
+        </div>
+        <div class="bm-legend">
+          <span class="bm-item"><i style="background:var(--left)"></i>左侧稳健 <b>85–95%</b></span>
+          <span class="bm-item"><i style="border:1px dashed var(--text-3)"></i>中间波段 <b>0%</b></span>
+          <span class="bm-item"><i style="background:var(--right)"></i>右侧凸性 <b>~5%</b></span>
+          <span class="bm-item"><i style="background:var(--zero)"></i>零成本 <b>+FREE</b></span>
+        </div>
+      </div>
+
       <div class="hero-cta h3-in">
-        <a class="btn btn-primary" href="https://app.climbing2the.top">进入系统</a>
+        <a class="btn btn-primary" href="https://app.climbing2the.top">进入系统
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="#pages">系统架构</a>
       </div>
     </div>
   </div>
 </section>
-<!-- ========== ② 设计哲学 ========== -->
+
+<!-- ========== ② 01 / 设计哲学：图形化三态分布蓝图 ========== -->
 <div class="wrap">
   <section id="philosophy">
     <div class="sec-head reveal">
-      <span class="sec-num">01 / 设计哲学</span>
-      <h2>为什么是「两头重、中间轻」</h2>
-      <p>两种完全不同的不确定性，需要两套完全不同的应对方式。它们的差别，画在收益分布上最清楚。</p>
+      <div class="sec-title-group">
+        <span class="sec-num">01 / PHILOSOPHY</span>
+        <h2>为什么是「两头重、中间轻」</h2>
+        <p class="sec-sub">两种截然不同的不确定性，对应两套收益分布与应对机制。</p>
+      </div>
     </div>
 
-    <!-- 双分布对比图：形状差异一眼可见，不需要解释词 -->
     <div class="dist-fig reveal">
+      <!-- 左侧：窄分布求稳 -->
       <div class="dist-panel dist-left">
-        <span class="tag tag-left">左侧 · 求稳</span>
-        <svg viewBox="0 0 300 120" class="dist-svg" preserveAspectRatio="none">
-          <line x1="0" y1="112" x2="300" y2="112" stroke="currentColor" stroke-opacity=".25"/>
-          <line x1="150" y1="10" x2="150" y2="112" stroke="currentColor" stroke-opacity=".18" stroke-dasharray="3 4"/>
-  <path d="M20 112 C70 112 88 108 100 76 C112 40 128 16 150 16 C172 16 188 40 200 76 C212 108 230 112 280 112"
-                class="dist-fill-left" fill="rgba(74,125,255,.14)" stroke="#4A7DFF" stroke-width="2.2"/>
+        <div class="dist-top">
+          <span class="tag tag-left">左侧 · 求稳压舱</span>
+          <span class="dist-metric">85%–95% 仓位</span>
+        </div>
+        <svg viewBox="0 0 300 116" class="dist-svg" preserveAspectRatio="none">
+          <line x1="0" y1="106" x2="300" y2="106" stroke="currentColor" stroke-opacity=".22"/>
+          <rect x="106" y="12" width="88" height="94" fill="var(--left)" fill-opacity=".07" rx="3"/>
+          <line x1="150" y1="12" x2="150" y2="106" stroke="var(--left)" stroke-opacity=".4" stroke-dasharray="3 3"/>
+          <path d="M20 106 C72 106 90 100 104 68 C116 36 130 14 150 14 C170 14 184 36 196 68 C210 100 228 106 280 106 Z"
+                class="dist-fill-left" fill="rgba(74,125,255,.15)" stroke="var(--left)" stroke-width="2.2"/>
+          <circle cx="150" cy="14" r="3.5" fill="var(--left)"/>
         </svg>
         <div class="dist-axis">
-          <span>−20%</span><span class="dist-mid">均值</span><span>+20%</span>
+          <span>−1σ 债底保护</span><span>均值复利</span><span>+1σ 再平衡</span>
         </div>
-        <p class="dist-cap"><strong>分布窄、可预期</strong>：结果集中在均值附近，靠时间与再平衡获取收益。</p>
+        <p class="dist-cap"><strong>分布窄、可预期</strong>：承认无法预测，靠周期定位、债底保护与极端恐慌时的现金抄底获取稳健复利。</p>
+        <div class="dist-chips">
+          <span class="chip">周期与情绪定位</span>
+          <span class="chip">债底安全边际</span>
+          <span class="chip">现金缓冲抄底</span>
+        </div>
       </div>
 
+      <!-- 中间：真空禁区 -->
       <div class="dist-panel dist-mid">
-        <span class="tag tag-mid">中间 · 留空</span>
-        <div class="dist-empty">
-          <svg viewBox="0 0 60 60" class="dist-x"><line x1="15" y1="15" x2="45" y2="45" stroke="currentColor" stroke-width="2"/><line x1="45" y1="15" x2="15" y2="45" stroke="currentColor" stroke-width="2"/></svg>
+        <div class="dist-top" style="justify-content:center">
+          <span class="tag tag-mid">中间 · 真空禁区</span>
         </div>
-        <p class="dist-cap"><strong>成本与损耗</strong>：不追热点、不做波段。看起来最像投资的一段，实际只贡献手续费与情绪波动。</p>
+        <svg viewBox="0 0 200 116" class="dist-svg">
+          <line x1="12" y1="58" x2="188" y2="58" stroke="currentColor" stroke-opacity=".18" stroke-dasharray="4 4"/>
+          <path d="M16 62 Q 42 22, 68 68 T 122 48 T 184 60" fill="none" stroke="currentColor" stroke-opacity=".22" stroke-width="1.8"/>
+          <circle cx="100" cy="58" r="24" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="1.8"/>
+          <line x1="83" y1="41" x2="117" y2="75" stroke="currentColor" stroke-opacity=".45" stroke-width="2"/>
+        </svg>
+        <div class="dist-axis" style="justify-content:center">
+          <span>0% 配置 · 拒绝平庸风险</span>
+        </div>
+        <p class="dist-cap"><strong>刻意留空的损耗带</strong>：不追热点、不做波段、不猜点位。看似最勤奋，实则只贡献手续费与情绪磨损。</p>
+        <div class="dist-chips">
+          <span class="chip">零波段择时</span>
+          <span class="chip">零热点追逐</span>
+        </div>
       </div>
 
+      <!-- 右侧：右偏长尾求凸 -->
       <div class="dist-panel dist-right">
-        <span class="tag tag-right">右侧 · 求凸</span>
-        <svg viewBox="0 0 300 120" class="dist-svg" preserveAspectRatio="none">
-          <line x1="0" y1="112" x2="300" y2="112" stroke="currentColor" stroke-opacity=".25"/>
-          <!-- 右偏长尾：左侧陡起（多数小亏），右侧极缓（少数数倍） -->
-          <path d="M14 112 C40 112 54 100 64 64 C70 42 76 26 84 22 C92 26 100 46 114 76 C134 104 180 111 296 112
-                   L296 112 L14 112 Z"
-                class="dist-fill-right" fill="rgba(240,180,41,.16)" stroke="#F0B429" stroke-width="2.2"/>
+        <div class="dist-top">
+          <span class="tag tag-right">右侧 · 求凸长尾</span>
+          <span class="dist-metric">~5% + 零成本</span>
+        </div>
+        <svg viewBox="0 0 300 116" class="dist-svg" preserveAspectRatio="none">
+          <line x1="0" y1="106" x2="300" y2="106" stroke="currentColor" stroke-opacity=".22"/>
+          <path d="M16 106 C40 106 54 96 64 62 C70 40 76 24 84 20 C92 24 100 44 116 74 C138 100 184 105 292 105 L292 106 Z"
+                class="dist-fill-right" fill="rgba(240,180,41,.16)" stroke="var(--right)" stroke-width="2.2"/>
+          <!-- 非对称上行箭头 -->
+          <path d="M168 92 C210 88 248 64 278 22" fill="none" stroke="var(--right)" stroke-width="1.8" stroke-dasharray="3 3"/>
+          <circle cx="278" cy="22" r="3.5" fill="var(--right)"/>
         </svg>
         <div class="dist-axis">
-          <span>小亏</span><span class="dist-mid">多数时候</span><span class="dist-hi">数倍 →</span>
+          <span>损失有界</span><span>多数静默等待</span><span class="dist-hi">10×–20× 爆发 →</span>
         </div>
-        <p class="dist-cap"><strong>右偏长尾</strong>：多数时候小亏或不动，少数时刻贡献数倍。赔率不够就不出手。</p>
-      </div>
-    </div>
-
-    <div class="phil-notes">
-      <div class="phil-note reveal">
-        <span class="tag tag-left">左侧</span>
-        <h3>承认无法预测</h3>
-        <p>宏观周期、利率路径、市场情绪——<strong>不可预测，但可以定位</strong>。系统只告诉你现在处在哪一段，不猜下一步。</p>
-      </div>
-      <div class="phil-note mid reveal">
-        <span class="tag tag-mid">中间</span>
-        <h3>刻意不做的事</h3>
-        <p>不做波段、不看每日推荐。中间那段<strong>看着最像投资，实际是成本与情绪损耗</strong>。</p>
-      </div>
-      <div class="phil-note reveal">
-        <span class="tag tag-right">右侧</span>
-        <h3>只在极端处出手</h3>
-        <p>赔率不够时<strong>不动本身就是决策</strong>。系统只在极端值出现时提醒，多数日子是安静的。</p>
+        <p class="dist-cap"><strong>右偏肥尾</strong>：只在保险便宜或零成本时出手。赔率不够时，按兵不动本身就是决策。</p>
+        <div class="dist-chips">
+          <span class="chip">尾部期权渔网</span>
+          <span class="chip">零成本打新</span>
+          <span class="chip">回流加固左侧</span>
+        </div>
       </div>
     </div>
   </section>
 </div>
 
-<!-- ========== ③ 思想来源 ========== -->
+<!-- ========== ③ 02 / 思想来源：可视化自动轮播 ========== -->
 <div class="wrap">
   <section id="thoughts">
     <div class="sec-head reveal">
-      <span class="sec-num">02 / 思想来源</span>
-      <h2>这套结构不是自创的</h2>
-      <p>杠铃、周期、安全边际、非对称——每一条都有明确的出处。</p>
-    </div>
-    <div class="thought reveal">
-      <div class="quote-body">
-        <p class="quote-text" id="qt"></p>
-        <p class="quote-zh" id="qz"></p>
-        <div class="quote-meta">
-          <span class="quote-name" id="qn"></span>
-          <span class="quote-src" id="qs"></span>
-        </div>
-        <div class="quote-nav">
-          <button class="arrow" id="prev" aria-label="上一条">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-          </button>
-          <button class="arrow" id="next" aria-label="下一条">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-          </button>
-          <div class="dots" id="dots"></div>
-        </div>
+      <div class="sec-title-group">
+        <span class="sec-num">02 / FOUNDATIONS</span>
+        <h2>这套结构不是自创的</h2>
+        <p class="sec-sub">点击切换或自动轮播——杠铃、周期、安全边际与非对称赔率的思想源头。</p>
       </div>
-      <div class="quote-portrait" id="qp"></div>
+    </div>
+
+    <div class="thought-wrap reveal">
+      <!-- 6 位思想家快切胶囊条 -->
+      <div class="thinker-tabs" id="thinkerTabs" role="tablist" aria-label="思想家切换"></div>
+
+      <div class="thought" id="thoughtCard">
+        <div class="quote-progress-track" aria-hidden="true">
+          <div class="quote-progress-bar" id="quoteBar"></div>
+        </div>
+        <span class="quote-watermark" aria-hidden="true">“</span>
+        <div class="quote-body">
+          <p class="quote-text" id="qt"></p>
+          <p class="quote-zh" id="qz"></p>
+          <div class="quote-meta">
+            <div class="quote-author" id="qa">
+              <span class="quote-name" id="qn"></span>
+              <span class="quote-src" id="qs"></span>
+            </div>
+            <div class="quote-nav">
+              <button class="arrow" id="prev" type="button" aria-label="上一条">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+              </button>
+              <button class="arrow" id="next" type="button" aria-label="下一条">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="quote-portrait" id="qp"></div>
+      </div>
     </div>
   </section>
 </div>
 
-<!-- ========== ④ 页面 ========== -->
+<!-- ========== ④ 03 / 系统架构：4 卡片视觉化 Bento 仪表矩阵 ========== -->
 <div class="wrap">
   <section id="pages">
     <div class="sec-head reveal">
-      <span class="sec-num">03 / 功能</span>
-      <h2>你会看到的七个页面</h2>
-      <p>只列当前对一般用户开放的部分。系统里另有管理工具，不在此介绍。</p>
+      <div class="sec-title-group">
+        <span class="sec-num">03 / ARCHITECTURE</span>
+        <h2>四大监控象限，一屏看清位置</h2>
+        <p class="sec-sub">提炼自系统内十个业务模块——用仪表与分位说话，不堆砌噪音。</p>
+      </div>
     </div>
-    <div class="pages">
-      <div class="page-group reveal">左侧 · 全天候稳健</div>
 
-      <div class="page-card reveal">
-        <div class="page-thumb">
-          <svg viewBox="0 0 120 60" fill="none" stroke="#4A7DFF" stroke-width="1.4">
-            <rect x="8" y="8" width="30" height="20" rx="3" opacity=".8"/>
-            <rect x="45" y="8" width="30" height="20" rx="3" opacity=".55"/>
-            <rect x="82" y="8" width="30" height="20" rx="3" opacity=".35"/>
-            <rect x="8" y="34" width="104" height="18" rx="3" opacity=".25"/>
-            <circle cx="20" cy="43" r="3" fill="#4A7DFF" stroke="none"/>
+    <div class="bento-grid">
+      <!-- 象限 1：全局中枢与战略罗盘 -->
+      <div class="bento-card b-left reveal">
+        <div class="bento-visual">
+          <span class="bento-badge tag-left">Ⅰ. 全局中枢</span>
+          <span class="bento-stat">再平衡触发器</span>
+          <svg viewBox="0 0 360 120" fill="none">
+            <!-- 左侧战略罗盘仪表 -->
+            <g transform="translate(76,62)">
+              <circle cx="0" cy="0" r="42" stroke="var(--left)" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="4 4"/>
+              <circle cx="0" cy="0" r="31" stroke="var(--left)" stroke-opacity=".65" stroke-width="2"/>
+              <path d="M-22 14 L0 -24 L22 14 Z" fill="var(--left)" fill-opacity=".15"/>
+              <line x1="0" y1="0" x2="18" y2="-20" stroke="var(--right)" stroke-width="2.4" stroke-linecap="round"/>
+              <circle cx="0" cy="0" r="4" fill="var(--left)"/>
+              <circle cx="18" cy="-20" r="3.2" fill="var(--right)"/>
+            </g>
+            <!-- 右侧仓位联动条 + 30天数据新鲜度矩阵 -->
+            <g transform="translate(146,24)">
+              <rect x="0" y="0" width="188" height="22" rx="5" fill="var(--card)" stroke="var(--line)"/>
+              <rect x="6" y="6" width="112" height="10" rx="3" fill="var(--left)" opacity=".85"/>
+              <rect x="122" y="6" width="32" height="10" rx="3" fill="var(--left)" opacity=".35"/>
+              <rect x="158" y="6" width="24" height="10" rx="3" fill="var(--right)" opacity=".9"/>
+
+              <rect x="0" y="30" width="188" height="20" rx="5" fill="var(--card)" stroke="var(--line)"/>
+              <path d="M10 44 L36 36 L64 41 L94 33 L126 38 L156 34 L178 37" stroke="var(--left)" stroke-width="1.8"/>
+              <circle cx="94" cy="33" r="2.8" fill="var(--right)"/>
+
+              <!-- 30天新鲜度热力点阵 -->
+              <g transform="translate(0,58)">
+                <rect x="0" y="0" width="188" height="18" rx="4" fill="var(--card)" stroke="var(--line)"/>
+                <g fill="var(--left)" opacity=".8">
+                  <rect x="8" y="5" width="10" height="8" rx="1.5"/>
+                  <rect x="22" y="5" width="10" height="8" rx="1.5"/>
+                  <rect x="36" y="5" width="10" height="8" rx="1.5"/>
+                  <rect x="50" y="5" width="10" height="8" rx="1.5"/>
+                  <rect x="64" y="5" width="10" height="8" rx="1.5"/>
+                  <rect x="78" y="5" width="10" height="8" rx="1.5" fill="var(--right)"/>
+                  <rect x="92" y="5" width="10" height="8" rx="1.5"/>
+                  <rect x="106" y="5" width="10" height="8" rx="1.5"/>
+                  <rect x="120" y="5" width="10" height="8" rx="1.5"/>
+                  <rect x="134" y="5" width="10" height="8" rx="1.5" fill="var(--zero)"/>
+                  <rect x="148" y="5" width="10" height="8" rx="1.5"/>
+                  <rect x="162" y="5" width="10" height="8" rx="1.5"/>
+                </g>
+              </g>
+            </g>
           </svg>
         </div>
-        <div class="page-body">
-          <h3>总览</h3>
-          <p>一屏看完罗盘指向、两侧状态、数据新鲜度。</p>
+        <div class="bento-body">
+          <h3>战略罗盘 &amp; 全局总览</h3>
+          <p>一屏统揽极端行情下的「现金缓冲 ↔ 核心权益」切换指令、跨资产异动报警与数据新鲜度热力图。</p>
+          <div class="bento-modules">
+            <span class="mod-pill" style="color:var(--left)"><i></i>总览罗盘</span>
+            <span class="mod-pill" style="color:var(--left)"><i></i>行情监控</span>
+            <span class="mod-pill"><i></i>新鲜度热力矩阵</span>
+          </div>
         </div>
       </div>
 
-      <div class="page-card reveal">
-        <div class="page-thumb">
-          <svg viewBox="0 0 120 60" fill="none" stroke="#4A7DFF" stroke-width="1.4">
-            <path d="M8 44 L28 30 L44 36 L62 18 L80 26 L100 12 L112 16" stroke-width="1.8"/>
-            <circle cx="62" cy="18" r="2.6" fill="#4A7DFF" stroke="none"/>
-            <line x1="8" y1="50" x2="112" y2="50" opacity=".3"/>
-            <line x1="8" y1="22" x2="112" y2="22" opacity=".15" stroke-dasharray="2 3"/>
+      <!-- 象限 2：左侧全天候稳健定位 -->
+      <div class="bento-card b-left reveal">
+        <div class="bento-visual">
+          <span class="bento-badge tag-left">Ⅱ. 左侧 · 全天候稳健</span>
+          <span class="bento-stat">周期 · 情绪 · 债底</span>
+          <svg viewBox="0 0 360 120" fill="none">
+            <!-- 动态情绪钟摆：将圆心 (60,68) 作为局部坐标系原点 (0,0)，确保指针中心绝对精准 -->
+            <g transform="translate(20,16)">
+              <path d="M16 68 A44 44 0 0 1 104 68" stroke="var(--left)" stroke-opacity=".28" stroke-width="6" stroke-linecap="round"/>
+              <path d="M16 68 A44 44 0 0 1 48 29" stroke="var(--left)" stroke-width="6" stroke-linecap="round"/>
+              <g transform="translate(60,68)">
+                <g class="svg-pendulum">
+                  <line x1="0" y1="0" x2="0" y2="-38" stroke="var(--right)" stroke-width="2.4" stroke-linecap="round"/>
+                  <circle cx="0" cy="-38" r="4.2" fill="var(--right)"/>
+                </g>
+                <circle cx="0" cy="0" r="4" fill="var(--left)"/>
+              </g>
+              <text x="14" y="88" font-size="9" font-family="monospace" fill="currentColor" opacity=".55">EXTREME FEAR</text>
+            </g>
+            <!-- 相关性矩阵 + 债底阶梯 -->
+            <g transform="translate(154,22)">
+              <!-- 3x3 相关性热力格 -->
+              <rect x="0" y="2" width="22" height="22" rx="4" fill="var(--left)" opacity=".85"/>
+              <rect x="26" y="2" width="22" height="22" rx="4" fill="var(--left)" opacity=".35"/>
+              <rect x="52" y="2" width="22" height="22" rx="4" fill="var(--left)" opacity=".18"/>
+              <rect x="0" y="28" width="22" height="22" rx="4" fill="var(--left)" opacity=".35"/>
+              <rect x="26" y="28" width="22" height="22" rx="4" fill="var(--left)" opacity=".85"/>
+              <rect x="52" y="28" width="22" height="22" rx="4" fill="var(--left)" opacity=".45"/>
+              <rect x="0" y="54" width="22" height="22" rx="4" fill="var(--left)" opacity=".18"/>
+              <rect x="26" y="54" width="22" height="22" rx="4" fill="var(--left)" opacity=".45"/>
+              <rect x="52" y="54" width="22" height="22" rx="4" fill="var(--left)" opacity=".85"/>
+
+              <!-- 右侧债底保护阶梯线 -->
+              <g transform="translate(92,4)">
+                <line x1="0" y1="68" x2="94" y2="68" stroke="var(--left)" stroke-opacity=".4" stroke-dasharray="3 3"/>
+                <path d="M4 60 L28 56 L52 44 L76 24 L92 10" stroke="var(--left)" stroke-width="2.2" stroke-linecap="round"/>
+                <circle cx="28" cy="56" r="3.5" fill="var(--right)"/>
+                <rect x="6" y="8" width="26" height="14" rx="3" fill="var(--left)" fill-opacity=".18" stroke="var(--left)"/>
+                <text x="12" y="18" font-size="8.5" font-family="monospace" fill="var(--left)">A级</text>
+              </g>
+            </g>
           </svg>
         </div>
-        <div class="page-body">
-          <h3>行情监控</h3>
-          <p>价格、均线偏离与异动。采集时间与数据日期分开标注。</p>
+        <div class="bento-body">
+          <h3>周期 · 情绪 · 风险与债底</h3>
+          <p>中美双周期坐标定位、恐贪情绪钟摆、跨资产相关性矩阵与可转债双低债底分级，守住下行安全边界。</p>
+          <div class="bento-modules">
+            <span class="mod-pill" style="color:var(--left)"><i></i>周期定位仪</span>
+            <span class="mod-pill" style="color:var(--left)"><i></i>市场情绪钟摆</span>
+            <span class="mod-pill" style="color:var(--left)"><i></i>风险仪表盘</span>
+            <span class="mod-pill" style="color:var(--left)"><i></i>可转债双低</span>
+          </div>
         </div>
       </div>
 
-      <div class="page-card reveal">
-        <div class="page-thumb">
-          <svg viewBox="0 0 120 60" fill="none" stroke="#4A7DFF" stroke-width="1.2">
-            <rect x="12" y="12" width="12" height="12" rx="2" opacity=".25"/>
-            <rect x="26" y="12" width="12" height="12" rx="2" opacity=".45"/>
-            <rect x="40" y="12" width="12" height="12" rx="2" opacity=".7"/>
-            <rect x="54" y="12" width="12" height="12" rx="2" opacity=".45"/>
-            <rect x="12" y="26" width="12" height="12" rx="2" opacity=".45"/>
-            <rect x="26" y="26" width="12" height="12" rx="2" opacity=".85" fill="#4A7DFF"/>
-            <rect x="40" y="26" width="12" height="12" rx="2" opacity=".55"/>
-            <rect x="12" y="40" width="12" height="12" rx="2" opacity=".7"/>
-            <rect x="26" y="40" width="12" height="12" rx="2" opacity=".55"/>
-            <rect x="40" y="40" width="12" height="12" rx="2" opacity=".25"/>
-            <path d="M70 40 L88 22 L106 34" stroke-width="1.8"/>
-            <circle cx="88" cy="22" r="2.6" fill="#4A7DFF" stroke="none"/>
+      <!-- 象限 3：右侧高凸性渔网 -->
+      <div class="bento-card b-right reveal">
+        <div class="bento-visual">
+          <span class="bento-badge tag-right">Ⅲ. 右侧 · 凸性机会</span>
+          <span class="bento-stat">损失有界 × 10×–20×</span>
+          <svg viewBox="0 0 360 120" fill="none">
+            <!-- 期权非线性赔率曲率 + 渔网雷达 -->
+            <g transform="translate(24,20)">
+              <line x1="0" y1="80" x2="180" y2="80" stroke="currentColor" stroke-opacity=".2"/>
+              <path d="M8 74 L92 74 C118 74 142 52 172 10" stroke="var(--right)" stroke-width="2.6" stroke-linecap="round"/>
+              <path d="M8 74 L92 74 C118 74 142 52 172 10 L172 80 L8 80 Z" fill="var(--right)" fill-opacity=".12"/>
+              <circle cx="92" cy="74" r="3.5" fill="var(--right)"/>
+              <circle cx="146" cy="40" r="3.5" fill="var(--right)"/>
+              <circle cx="172" cy="10" r="4.5" fill="var(--right)"/>
+              <text x="128" y="24" font-size="10" font-family="monospace" font-weight="bold" fill="var(--right)">20× PAYOFF</text>
+            </g>
+            <!-- 右侧极坐标渔网扫描仪 -->
+            <g transform="translate(276,62)">
+              <circle cx="0" cy="0" r="40" stroke="var(--right)" stroke-opacity=".25" stroke-width="1.4"/>
+              <circle cx="0" cy="0" r="26" stroke="var(--right)" stroke-opacity=".4" stroke-width="1.4" stroke-dasharray="3 3"/>
+              <circle cx="0" cy="0" r="12" stroke="var(--right)" stroke-opacity=".6" stroke-width="1.4"/>
+              <line x1="-40" y1="0" x2="40" y2="0" stroke="var(--right)" stroke-opacity=".25"/>
+              <line x1="0" y1="-40" x2="0" y2="40" stroke="var(--right)" stroke-opacity=".25"/>
+              <path d="M0 0 L28 -28 A40 40 0 0 1 40 0 Z" fill="var(--right)" fill-opacity=".24"/>
+              <circle cx="22" cy="-14" r="3.5" fill="var(--right)"/>
+              <circle cx="31" cy="-6" r="2.5" fill="var(--right)"/>
+            </g>
           </svg>
         </div>
-        <div class="page-body">
-          <h3>风险仪表盘</h3>
-          <p>相关性矩阵与风险预算。5 年周频，拆分个股做复权。</p>
+        <div class="bento-body">
+          <h3>凸性彩票渔网 &amp; 实物期权</h3>
+          <p>监测波动率风险溢价（VRP）分位，在保险便宜时张网扫描深虚高赔率期权，辅以低维持成本实物期权台账。</p>
+          <div class="bento-modules">
+            <span class="mod-pill" style="color:var(--right)"><i></i>凸性彩票渔网</span>
+            <span class="mod-pill" style="color:var(--right)"><i></i>VRP 成本分位</span>
+            <span class="mod-pill" style="color:var(--right)"><i></i>实物期权组合</span>
+          </div>
         </div>
       </div>
 
-      <div class="page-card reveal">
-        <div class="page-thumb">
-          <svg viewBox="0 0 120 60" fill="none" stroke="#4A7DFF" stroke-width="1.4">
-            <circle cx="60" cy="30" r="22" stroke-dasharray="3 4" opacity=".45"/>
-            <circle cx="60" cy="30" r="14" opacity=".7"/>
-            <circle cx="60" cy="30" r="5" fill="#4A7DFF" stroke="none"/>
-            <line x1="60" y1="30" x2="76" y2="16" stroke-width="1.8"/>
-            <circle cx="76" cy="16" r="3" fill="#F0B429" stroke="none"/>
-            <line x1="20" y1="30" x2="34" y2="30" opacity=".3"/>
-            <line x1="86" y1="30" x2="100" y2="30" opacity=".3"/>
+      <!-- 象限 4：零成本机会与配置通道 -->
+      <div class="bento-card reveal">
+        <div class="bento-visual">
+          <span class="bento-badge tag-zero">Ⅳ. 零成本 &amp; 落地通道</span>
+          <span class="bento-stat">不占仓位 · 硬门控</span>
+          <svg viewBox="0 0 360 120" fill="none">
+            <!-- 左侧：免费彩票凭证图形 -->
+            <g transform="translate(24,28)">
+              <rect x="0" y="0" width="136" height="64" rx="8" fill="var(--card)" stroke="var(--zero)" stroke-width="1.6"/>
+              <line x1="42" y1="0" x2="42" y2="64" stroke="var(--zero)" stroke-opacity=".45" stroke-dasharray="3 3"/>
+              <circle cx="21" cy="32" r="9" fill="var(--zero)" fill-opacity=".18" stroke="var(--zero)" stroke-width="1.5"/>
+              <path d="M17 32 L20 35 L26 29" stroke="var(--zero)" stroke-width="1.8" stroke-linecap="round"/>
+              <rect x="54" y="16" width="46" height="8" rx="2" fill="var(--zero)" opacity=".75"/>
+              <rect x="54" y="30" width="68" height="7" rx="2" fill="currentColor" opacity=".2"/>
+              <rect x="54" y="43" width="54" height="7" rx="2" fill="var(--right)" opacity=".65"/>
+            </g>
+            <!-- 右侧：场内 ETF vs 场外联接通道比对门控 -->
+            <g transform="translate(192,26)">
+              <rect x="0" y="4" width="56" height="24" rx="5" fill="var(--card)" stroke="var(--left)" stroke-width="1.5"/>
+              <text x="12" y="19" font-size="9" font-family="monospace" fill="var(--left)">ETF 场内</text>
+              <rect x="0" y="38" width="56" height="24" rx="5" fill="var(--card)" stroke="var(--line)"/>
+              <text x="12" y="53" font-size="9" font-family="monospace" fill="currentColor" opacity=".5">场外联接</text>
+              <path d="M56 16 L92 33 M56 50 L92 33" stroke="var(--left)" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="3 2"/>
+              <circle cx="92" cy="33" r="5" fill="var(--zero)"/>
+              <rect x="104" y="21" width="44" height="24" rx="5" fill="var(--zero)" fill-opacity=".15" stroke="var(--zero)"/>
+              <text x="112" y="36" font-size="9" font-family="monospace" font-weight="bold" fill="var(--zero)">最优通道</text>
+            </g>
           </svg>
         </div>
-        <div class="page-body">
-          <h3>周期定位仪</h3>
-          <p>美林时钟与信贷周期的坐标，中美分开看。给位置，不给方向。</p>
-        </div>
-      </div>
-
-      <div class="page-card reveal">
-        <div class="page-thumb">
-          <svg viewBox="0 0 120 60" fill="none" stroke="#4A7DFF" stroke-width="1.4">
-            <path d="M20 30 A40 40 0 0 1 100 30" opacity=".25"/>
-            <path d="M20 30 A40 40 0 0 1 60 10" stroke="#4A7DFF" stroke-width="2.4"/>
-            <line x1="60" y1="30" x2="76" y2="14" stroke-width="1.8"/>
-            <circle cx="60" cy="30" r="2.6" fill="#4A7DFF" stroke="none"/>
-            <text x="16" y="46" font-size="7" fill="currentColor" stroke="none" opacity=".5">恐惧</text>
-            <text x="88" y="46" font-size="7" fill="currentColor" stroke="none" opacity=".5">贪婪</text>
-          </svg>
-        </div>
-        <div class="page-body">
-          <h3>市场情绪钟摆</h3>
-          <p>恐惧贪婪、CBBI 压成一个刻度。看极端，不看日常。</p>
-        </div>
-      </div>
-
-      <div class="page-card reveal">
-        <div class="page-thumb">
-          <svg viewBox="0 0 120 60" fill="none" stroke="#4A7DFF" stroke-width="1.4">
-            <path d="M14 42 L40 34 L60 36 L84 24 L104 28" opacity=".85"/>
-            <line x1="14" y1="48" x2="104" y2="48" opacity=".28"/>
-            <line x1="14" y1="30" x2="104" y2="30" opacity=".15" stroke-dasharray="2 3"/>
-            <circle cx="84" cy="24" r="3" fill="#F0B429" stroke="none"/>
-            <text x="74" y="58" font-size="6.5" fill="currentColor" stroke="none" opacity=".45">双低</text>
-          </svg>
-        </div>
-        <div class="page-body">
-          <h3>可转债双低</h3>
-          <p>转股溢价 + 纯债溢价排序。下跌有债底，上涨跟正股。</p>
-        </div>
-      </div>
-
-      <div class="page-group reveal">配置通道</div>
-
-      <div class="page-card reveal">
-        <div class="page-thumb">
-          <svg viewBox="0 0 120 60" fill="none" stroke="#94A3B8" stroke-width="1.4">
-            <rect x="16" y="18" width="34" height="24" rx="3" opacity=".6"/>
-            <rect x="66" y="18" width="34" height="24" rx="3" opacity=".35"/>
-            <path d="M50 30 L66 30" stroke-dasharray="3 3"/>
-            <path d="M60 26 L66 30 L60 34" stroke-width="1.6"/>
-            <line x1="16" y1="49" x2="100" y2="49" opacity=".2"/>
-          </svg>
-        </div>
-        <div class="page-body">
-          <h3>场内外基金配置</h3>
-          <p>同一条指数，场内 ETF 与场外联接谁买得到、贵不贵。回答能不能执行。</p>
+        <div class="bento-body">
+          <h3>零成本打新 &amp; 跨渠道配置</h3>
+          <p>不花钱、不占仓位的可转债打新日历；配合场内 ETF 与场外联接基金的硬门控筛选与最低费率比对。</p>
+          <div class="bento-modules">
+            <span class="mod-pill" style="color:var(--zero)"><i></i>打新/事件提醒</span>
+            <span class="mod-pill"><i></i>场内外基金配置</span>
+            <span class="mod-pill"><i></i>多端提醒推送</span>
+          </div>
         </div>
       </div>
     </div>
   </section>
 </div>
 
-<!-- ========== ⑤ 边界 ========== -->
+<!-- ========== ⑤ 04 / 四不边界：极简图形化勋章条 ========== -->
 <div class="wrap">
   <section id="boundary">
     <div class="sec-head reveal">
-      <span class="sec-num">04 / 边界</span>
-      <h2>它明确不做什么</h2>
-      <p>知道一个工具不做什么，比知道它能做什么更能判断它是否适合你。</p>
+      <div class="sec-title-group">
+        <span class="sec-num">04 / BOUNDARIES</span>
+        <h2>它明确不做什么</h2>
+        <p class="sec-sub">克制比功能更重要——守住四条边界，系统才不会沦为情绪放大器。</p>
+      </div>
     </div>
-    <div class="donts">
-      <div class="dont reveal">
-        <div class="dont-mark">×</div>
-        <div>
-          <h3>不做交易执行</h3>
-          <p>系统只呈现信息、辅助决策。下单永远发生在券商或交易所，这里没有任何下单入口，也不对接你的账户。</p>
+
+    <div class="donts-grid">
+      <div class="dont-card reveal">
+        <div class="dont-top">
+          <div class="dont-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="4" y1="4" x2="20" y2="20" stroke="var(--right)"/></svg>
+          </div>
+          <span class="dont-tag">NO EXECUTION</span>
         </div>
+        <h3>不做交易执行</h3>
+        <p>只给坐标信号，绝不触碰账户与下单。</p>
       </div>
-      <div class="dont reveal">
-        <div class="dont-mark">×</div>
-        <div>
-          <h3>不做价格预测</h3>
-          <p>周期定位告诉你「现在在哪个季节」，不告诉你「明天涨还是跌」。任何声称能预测点位的功能都不会出现在这里。</p>
+
+      <div class="dont-card reveal">
+        <div class="dont-top">
+          <div class="dont-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/><line x1="4" y1="4" x2="20" y2="20" stroke="var(--right)"/></svg>
+          </div>
+          <span class="dont-tag">NO FORECAST</span>
         </div>
+        <h3>不做点位预测</h3>
+        <p>只定位当前季节，绝不猜明天涨跌。</p>
       </div>
-      <div class="dont reveal">
-        <div class="dont-mark">×</div>
-        <div>
-          <h3>不做全市场扫描</h3>
-          <p>不做每日推荐、不发机会清单。只有出现极端值或特定事件时才提醒，多数日子是安静的。</p>
+
+      <div class="dont-card reveal">
+        <div class="dont-top">
+          <div class="dont-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><line x1="4" y1="4" x2="20" y2="20" stroke="var(--right)"/></svg>
+          </div>
+          <span class="dont-tag">NO NOISE</span>
         </div>
+        <h3>不做日常推荐</h3>
+        <p>无极端分位不提醒，多数日子保持安静。</p>
       </div>
-      <div class="dont reveal">
-        <div class="dont-mark">×</div>
-        <div>
-          <h3>不做杠杆</h3>
-          <p>右侧准入标准是「损失有限 × 收益数倍」。加了杠杆就达不到这个赔率结构，因此不进右侧。</p>
+
+      <div class="dont-card reveal">
+        <div class="dont-top">
+          <div class="dont-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5"/><line x1="4" y1="4" x2="20" y2="20" stroke="var(--right)"/></svg>
+          </div>
+          <span class="dont-tag">NO LEVERAGE</span>
         </div>
+        <h3>不加任何杠杆</h3>
+        <p>锁死下行损失边界，右侧凸性才成立。</p>
       </div>
     </div>
   </section>
@@ -831,9 +1056,9 @@ footer{
   <footer>
     <div class="foot-left">
       <svg viewBox="0 0 32 32" fill="none">
-        <circle cx="9" cy="16" r="5" fill="#4A7DFF"/>
-        <circle cx="23" cy="16" r="6.5" fill="#F0B429"/>
-        <rect x="13" y="15.2" width="6" height="1.6" fill="#6B7C9B"/>
+        <circle cx="9.5" cy="16" r="6.5" fill="#4A7DFF"/>
+        <circle cx="24" cy="16" r="4" fill="#F0B429"/>
+        <rect x="17" y="15.3" width="4.2" height="1.4" fill="#6B7C9B"/>
       </svg>
       <span>投资监控 Dashboard</span>
     </div>
@@ -842,7 +1067,7 @@ footer{
       <span>© <span id="year"></span></span>
     </div>
   </footer>
-  <!-- 人像出处：CC BY / CC BY-SA 授权要求署名，公有领域也一并标注来源 -->
+
   <details class="credits">
     <summary>人像来源与许可</summary>
     <ul>
@@ -859,16 +1084,19 @@ footer{
 
 <script>
 /* ============================================================
-   1) Hero 文案淡入 + 下半页滚动入场
-   —— 刻意与 3D 动画解耦：动画挂掉 / 未接入 / reduced-motion，
-      这部分都必须正常工作，否则整页会静默空白
+   1) Hero 文案淡入 + 滚动入场
    ============================================================ */
 (function(){
   var hero = document.getElementById('hero');
   if(hero){
-    // 下一帧再加 on，保证 CSS 动画能触发
     requestAnimationFrame(function(){ hero.classList.add('on'); });
   }
+  // 兜底保障：若 WebGL 未加载或异常，2.5s 后自动解锁文字显示，防止页面空白
+  setTimeout(function(){
+    if(document.body && !document.body.classList.contains('hero-docked')){
+      document.body.classList.add('hero-docked');
+    }
+  }, 2500);
 
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var items = document.querySelectorAll('.reveal');
@@ -885,86 +1113,154 @@ footer{
         io.unobserve(entries[j].target);
       }
     }
-  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.05 });
+  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
   for(var k = 0; k < items.length; k++) io.observe(items[k]);
 })();
 
 /* ============================================================
-   2) 思想来源轮播（每条引言均标出处）
+   2) 思想来源自动轮播（含顶部实时进度条 + 6 位思想家快切胶囊 + 悬停暂停）
    ============================================================ */
 (function(){
   var DATA = [
     { q:"Invest in things that gain from disorder.",
       zh:"投资于那些能从混乱中受益的东西。",
-      name:"Nassim Nicholas Taleb", src:"Antifragile, 2012", head:"taleb" },
+      name:"Nassim Nicholas Taleb", short:"Taleb", tag:"反脆弱", src:"Antifragile, 2012", head:"taleb" },
     { q:"You can\u2019t predict. You can prepare.",
       zh:"你无法预测，但可以准备。",
-      name:"Howard Marks", src:"Oaktree client memo", head:"marks" },
+      name:"Howard Marks", short:"Marks", tag:"周期定位", src:"Oaktree Memo", head:"marks" },
     { q:"The margin of safety is always dependent on the price paid.",
       zh:"安全边际永远取决于你所支付的价格。",
-      name:"Benjamin Graham", src:"The Intelligent Investor, 1949", head:"graham" },
+      name:"Benjamin Graham", short:"Graham", tag:"安全边际", src:"The Intelligent Investor", head:"graham" },
     { q:"Markets can remain irrational longer than you can remain solvent.",
       zh:"市场保持非理性的时间，可能长过你保持偿付能力的时间。",
-      name:"John Maynard Keynes", src:"widely attributed", head:"keynes" },
+      name:"John Maynard Keynes", short:"Keynes", tag:"偿付边界", src:"Widely Attributed", head:"keynes" },
     { q:"He who lives by the crystal ball will eat shattered glass.",
       zh:"靠水晶球过活的人，终将吃下碎玻璃。",
-      name:"Ray Dalio", src:"Principles, 2017", head:"dalio" },
+      name:"Ray Dalio", short:"Dalio", tag:"拒绝预测", src:"Principles, 2017", head:"dalio" },
     { q:"Nothing in life is as important as you think it is, while you are thinking about it.",
       zh:"生活中没有哪件事，有你在想它时以为的那么重要。",
-      name:"Daniel Kahneman", src:"Thinking, Fast and Slow, 2011", head:"kahneman" }
+      name:"Daniel Kahneman", short:"Kahneman", tag:"情绪降噪", src:"Thinking, Fast and Slow", head:"kahneman" }
   ];
 
-  /* 头像：真实照片的铅笔素描稿（AI 图生图转写，已统一到同一头高基准）
-     源照片均为 Wikimedia Commons 的公有领域或 CC 授权作品，出处见页脚「人像来源」 */
   var PORTRAIT_SRC = 'assets/portraits-final/';
+  var DURATION = 4800; // 4.8秒自动轮播切换
 
   function portrait(key){
     var src = PORTRAIT_SRC + key + '.webp';
-    return '<img class="p-img" src="' + src + '" alt="" width="440" height="550" '
-      + 'decoding="async" loading="lazy">';
+    return '<img class="p-img" src="' + src + '" alt="" width="440" height="550" decoding="async" loading="lazy">';
   }
 
-  var i = 0, timer = null;
+  var i = 0;
   var qt = document.getElementById('qt'), qn = document.getElementById('qn'),
       qs = document.getElementById('qs'), qp = document.getElementById('qp'),
-      qz = document.getElementById('qz'),
-      dots = document.getElementById('dots');
+      qz = document.getElementById('qz'), qa = document.getElementById('qa'),
+      tabsWrap = document.getElementById('thinkerTabs'),
+      bar = document.getElementById('quoteBar'),
+      card = document.getElementById('thoughtCard');
   if(!qt) return;
 
-  DATA.forEach(function(_, k){
+  DATA.forEach(function(item, k){
     var b = document.createElement('button');
-    b.className = 'dot' + (k === 0 ? ' on' : '');
-    b.setAttribute('aria-label', '第 ' + (k + 1) + ' 条');
+    b.type = 'button';
+    b.className = 't-tab' + (k === 0 ? ' on' : '');
+    b.innerHTML = '<span>' + item.short + '</span><span class="t-tag">· ' + item.tag + '</span>';
     b.addEventListener('click', function(){ go(k); });
-    dots.appendChild(b);
+    tabsWrap.appendChild(b);
   });
 
-  function render(){
+  function render(immediate){
     var d = DATA[i];
-    [qt, qn, qs, qp, qz].forEach(function(e){ if(e) e.style.opacity = '0'; });
-    setTimeout(function(){
-      qt.textContent = d.q;
-      if(qz) qz.textContent = d.zh || '';
+    [].slice.call(tabsWrap.children).forEach(function(el, k){
+      el.className = 't-tab' + (k === i ? ' on' : '');
+    });
+
+    if(immediate){
+      qt.textContent = '\u201C' + d.q + '\u201D';
+      qz.textContent = d.zh;
       qn.textContent = d.name;
       qs.textContent = d.src;
       qp.innerHTML = portrait(d.head);
-      [qt, qn, qs, qp, qz].forEach(function(e){ if(e) e.style.opacity = '1'; });
-      [].slice.call(dots.children).forEach(function(el, k){ el.className = 'dot' + (k === i ? ' on' : ''); });
-    }, 220);
+      return;
+    }
+
+    var slideTargets = [qt, qz, qa, qp];
+    // 第一步：向左侧滑动并淡出
+    slideTargets.forEach(function(e){
+      if(e){
+        e.style.transition = 'opacity .24s ease, transform .26s cubic-bezier(.4,0,.2,1)';
+        e.style.opacity = '0';
+        e.style.transform = 'translateX(-38px)';
+      }
+    });
+    setTimeout(function(){
+      qt.textContent = '\u201C' + d.q + '\u201D';
+      qz.textContent = d.zh;
+      qn.textContent = d.name;
+      qs.textContent = d.src;
+      qp.innerHTML = portrait(d.head);
+
+      // 第二步：瞬移至右侧起点（无过渡）
+      slideTargets.forEach(function(e){
+        if(e){
+          e.style.transition = 'none';
+          e.style.opacity = '0';
+          e.style.transform = 'translateX(38px)';
+        }
+      });
+
+      // 第三步：强制触发回流后，从右侧平滑滑入中心并淡入
+      void qt.offsetWidth;
+      slideTargets.forEach(function(e){
+        if(e){
+          e.style.transition = 'opacity .34s ease, transform .36s cubic-bezier(.22,.9,.28,1)';
+          e.style.opacity = '1';
+          e.style.transform = 'translateX(0)';
+        }
+      });
+    }, 240);
   }
-  function go(k){ i = (k + DATA.length) % DATA.length; render(); restart(); }
-  function restart(){ clearInterval(timer); timer = setInterval(function(){ go(i + 1); }, 6500); }
+
+  var elapsed = 0;
+  var lastTick = performance.now();
+  var paused = false;
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function go(k){
+    i = (k + DATA.length) % DATA.length;
+    elapsed = 0;
+    if(bar) bar.style.width = '0%';
+    render(false);
+  }
+
+  if(card){
+    card.addEventListener('mouseenter', function(){ paused = true; });
+    card.addEventListener('mouseleave', function(){ paused = false; lastTick = performance.now(); });
+  }
 
   document.getElementById('prev').addEventListener('click', function(){ go(i - 1); });
   document.getElementById('next').addEventListener('click', function(){ go(i + 1); });
 
-  render();
-  restart();
+  render(true);
+
+  if(!reduced){
+    function tick(now){
+      var dt = Math.min(100, now - lastTick);
+      lastTick = now;
+      if(!paused){
+        elapsed += dt;
+        if(bar) bar.style.width = Math.min(100, (elapsed / DURATION) * 100).toFixed(1) + '%';
+        if(elapsed >= DURATION){
+          go(i + 1);
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
 })();
 
-
 /* ============================================================
-   5) 主题切换：auto（跟随系统）/ light / dark 三态
+   3) 主题切换：auto / light / dark 三态
    ============================================================ */
 (function(){
   var root = document.documentElement;
@@ -996,7 +1292,6 @@ footer{
     });
   }
 
-  // 系统主题变化：仅在 auto 态跟随
   var onSysChange = function(){
     if(currentPref() === 'auto') apply('auto', false);
   };
@@ -1006,13 +1301,8 @@ footer{
   apply(currentPref(), false);
 })();
 
-
 /* ============================================================
-   6) 版本号与年份
-   —— 版本号唯一真相源是仓库根的 VERSION 文件，运行时 fetch 读取。
-      静态站没法像 Vite 那样构建期注入，所以走 fetch；
-      失败时什么都不显示，绝不硬编码（硬编码副本必然过期——
-      这正是本页上一版显示 v4.10.1 却已发到 v4.10.2 的原因）。
+   4) 版本号与年份
    ============================================================ */
 (function(){
   document.getElementById('year').textContent = new Date().getFullYear();
@@ -1025,9 +1315,10 @@ footer{
       if(!v) return;
       els.forEach(function(e){ if(e) e.textContent = 'v' + v; });
     })
-    .catch(function(){ /* 读不到就不显示，不留过期值 */ });
+    .catch(function(){});
 })();
-
 </script>
+<script src="three.min.js"></script>
+<script src="hero-scene.js"></script>
 </body>
 </html>
