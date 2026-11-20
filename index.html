@@ -197,7 +197,8 @@ body.hero-ready .hero-stage{opacity:0;visibility:hidden;transition:none;pointer-
   margin-bottom:22px;
 }
 
-/* 图形化杠铃仓位配比尺（以图代文：直观呈现 89% : 0% : 5% + FREE） */
+/* 杠铃结构示意条：只表达"极不均匀"的形状，不承诺任何具体比例。
+   塔勒布本人的 Universal 组合也并非固定比例，写死百分比等于制造虚假精度。 */
 .barbell-meter{
   background:var(--card);
   border:1px solid var(--line);
@@ -214,15 +215,24 @@ body.hero-ready .hero-stage{opacity:0;visibility:hidden;transition:none;pointer-
 }
 .bm-head strong{color:var(--text);font-weight:600}
 .bm-track{
-  display:grid;grid-template-columns:5.2fr 1.6fr 1.1fr 1.1fr;gap:5px;
+  display:grid;grid-template-columns:5.6fr .55fr .8fr .7fr;gap:5px;
   height:10px;align-items:center;margin-bottom:9px;
 }
 .bm-seg{height:100%;border-radius:4px;position:relative;overflow:hidden}
 .bm-left{background:linear-gradient(90deg, var(--left), #6B96FF)}
+/* 中间：整段断开，两侧只各留一个短刻度标记断口的位置
+   —— 它是"没有"，不是"很少"，所以不能用填充来表达 */
 .bm-mid{
-  border:1px dashed var(--text-3);opacity:.38;
-  background:repeating-linear-gradient(45deg,transparent,transparent 3px,var(--line) 3px,var(--line) 6px);
+  position:relative;background:none;
 }
+.bm-mid::before,
+.bm-mid::after{
+  content:"";position:absolute;top:50%;width:3px;height:16px;
+  margin-top:-8px;border-radius:1px;
+  background:var(--text-3);opacity:.30;
+}
+.bm-mid::before{left:-2px}
+.bm-mid::after{right:-2px}
 .bm-right{background:linear-gradient(90deg, var(--right), #FFD166)}
 .bm-zero{background:var(--zero);opacity:.85}
 .bm-legend{
@@ -631,16 +641,16 @@ footer{
           <strong>两头配置 · 中间归零</strong>
         </div>
         <div class="bm-track">
-          <div class="bm-seg bm-left" title="左侧稳健底仓 85%–95%"></div>
-          <div class="bm-seg bm-mid" title="中间预测波段 0%（留空）"></div>
-          <div class="bm-seg bm-right" title="右侧凸性期权 ~5%"></div>
-          <div class="bm-seg bm-zero" title="零成本打新 不占仓位"></div>
+          <div class="bm-seg bm-left" title="左侧稳健：占据绝大部分"></div>
+          <div class="bm-seg bm-mid" title="中间波段：刻意留空"></div>
+          <div class="bm-seg bm-right" title="右侧凸性：只占很小一块"></div>
+          <div class="bm-seg bm-zero" title="零成本打新：不占仓位"></div>
         </div>
         <div class="bm-legend">
-          <span class="bm-item"><i style="background:var(--left)"></i>左侧稳健 <b>85–95%</b></span>
-          <span class="bm-item"><i style="border:1px dashed var(--text-3)"></i>中间波段 <b>0%</b></span>
-          <span class="bm-item"><i style="background:var(--right)"></i>右侧凸性 <b>~5%</b></span>
-          <span class="bm-item"><i style="background:var(--zero)"></i>零成本 <b>+FREE</b></span>
+          <span class="bm-item"><i style="background:var(--left)"></i>左侧稳健 <b>绝大部分</b></span>
+          <span class="bm-item"><i style="border:1px dashed var(--text-3)"></i>中间波段 <b>留空</b></span>
+          <span class="bm-item"><i style="background:var(--right)"></i>右侧凸性 <b>很小一块</b></span>
+          <span class="bm-item"><i style="background:var(--zero)"></i>零成本打新 <b>不占仓</b></span>
         </div>
       </div>
 
@@ -648,7 +658,6 @@ footer{
         <a class="btn btn-primary" href="https://app.climbing2the.top">进入系统
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
         </a>
-        <a class="btn btn-ghost" href="#pages">系统架构</a>
       </div>
     </div>
   </div>
@@ -670,7 +679,7 @@ footer{
       <div class="dist-panel dist-left">
         <div class="dist-top">
           <span class="tag tag-left">左侧 · 求稳压舱</span>
-          <span class="dist-metric">85%–95% 仓位</span>
+          <span class="dist-metric">主体仓位</span>
         </div>
         <svg viewBox="0 0 300 116" class="dist-svg" preserveAspectRatio="none">
           <line x1="0" y1="106" x2="300" y2="106" stroke="currentColor" stroke-opacity=".22"/>
@@ -703,7 +712,7 @@ footer{
           <line x1="83" y1="41" x2="117" y2="75" stroke="currentColor" stroke-opacity=".45" stroke-width="2"/>
         </svg>
         <div class="dist-axis" style="justify-content:center">
-          <span>0% 配置 · 拒绝平庸风险</span>
+          <span>不留仓位 · 拒绝平庸风险</span>
         </div>
         <p class="dist-cap"><strong>刻意留空的损耗带</strong>：不追热点、不做波段、不猜点位。看似最勤奋，实则只贡献手续费与情绪磨损。</p>
         <div class="dist-chips">
@@ -716,7 +725,7 @@ footer{
       <div class="dist-panel dist-right">
         <div class="dist-top">
           <span class="tag tag-right">右侧 · 求凸长尾</span>
-          <span class="dist-metric">~5% + 零成本</span>
+          <span class="dist-metric">小比例 + 零成本</span>
         </div>
         <svg viewBox="0 0 300 116" class="dist-svg" preserveAspectRatio="none">
           <line x1="0" y1="106" x2="300" y2="106" stroke="currentColor" stroke-opacity=".22"/>
@@ -727,7 +736,7 @@ footer{
           <circle cx="278" cy="22" r="3.5" fill="var(--right)"/>
         </svg>
         <div class="dist-axis">
-          <span>损失有界</span><span>多数静默等待</span><span class="dist-hi">10×–20× 爆发 →</span>
+          <span>损失有界</span><span>多数静默等待</span><span class="dist-hi">赔率不到位不出手 →</span>
         </div>
         <p class="dist-cap"><strong>右偏肥尾</strong>：只在保险便宜或零成本时出手。赔率不够时，按兵不动本身就是决策。</p>
         <div class="dist-chips">
@@ -747,7 +756,7 @@ footer{
       <div class="sec-title-group">
         <span class="sec-num">02 / FOUNDATIONS</span>
         <h2>这套结构不是自创的</h2>
-        <p class="sec-sub">点击切换或自动轮播——杠铃、周期、安全边际与非对称赔率的思想源头。</p>
+        <p class="sec-sub">杠铃、周期、安全边际与非对称赔率的思想源头。</p>
       </div>
     </div>
 
@@ -913,7 +922,7 @@ footer{
       <div class="bento-card b-right reveal">
         <div class="bento-visual">
           <span class="bento-badge tag-right">Ⅲ. 右侧 · 凸性机会</span>
-          <span class="bento-stat">损失有界 × 10×–20×</span>
+          <span class="bento-stat">损失有界 · 只接高赔率</span>
           <svg viewBox="0 0 360 120" fill="none">
             <!-- 期权非线性赔率曲率 + 渔网雷达 -->
             <g transform="translate(24,20)">
@@ -923,7 +932,7 @@ footer{
               <circle cx="92" cy="74" r="3.5" fill="var(--right)"/>
               <circle cx="146" cy="40" r="3.5" fill="var(--right)"/>
               <circle cx="172" cy="10" r="4.5" fill="var(--right)"/>
-              <text x="128" y="24" font-size="10" font-family="monospace" font-weight="bold" fill="var(--right)">20× PAYOFF</text>
+              <text x="126" y="24" font-size="10" font-family="monospace" font-weight="bold" fill="var(--right)">HIGH PAYOFF</text>
             </g>
             <!-- 右侧极坐标渔网扫描仪 -->
             <g transform="translate(276,62)">
@@ -999,7 +1008,7 @@ footer{
       <div class="sec-title-group">
         <span class="sec-num">04 / BOUNDARIES</span>
         <h2>它明确不做什么</h2>
-        <p class="sec-sub">克制比功能更重要——守住四条边界，系统才不会沦为情绪放大器。</p>
+        <p class="sec-sub">克制比功能更重要。守住这四条，它才不会变成又一个让你频繁动手的工具。</p>
       </div>
     </div>
 
@@ -1012,7 +1021,7 @@ footer{
           <span class="dont-tag">NO EXECUTION</span>
         </div>
         <h3>不做交易执行</h3>
-        <p>只给坐标信号，绝不触碰账户与下单。</p>
+        <p>系统只告诉你现在站在什么位置，不会碰你的账户，也不会替你下单。</p>
       </div>
 
       <div class="dont-card reveal">
@@ -1023,7 +1032,7 @@ footer{
           <span class="dont-tag">NO FORECAST</span>
         </div>
         <h3>不做点位预测</h3>
-        <p>只定位当前季节，绝不猜明天涨跌。</p>
+        <p>它判断的是现在处在周期的哪个阶段，不猜明天是涨还是跌。</p>
       </div>
 
       <div class="dont-card reveal">
@@ -1034,7 +1043,7 @@ footer{
           <span class="dont-tag">NO NOISE</span>
         </div>
         <h3>不做日常推荐</h3>
-        <p>无极端分位不提醒，多数日子保持安静。</p>
+        <p>平时不打扰你。只有价格走到极端位置、或出现明确机会，才会出声。</p>
       </div>
 
       <div class="dont-card reveal">
@@ -1045,7 +1054,7 @@ footer{
           <span class="dont-tag">NO LEVERAGE</span>
         </div>
         <h3>不加任何杠杆</h3>
-        <p>锁死下行损失边界，右侧凸性才成立。</p>
+        <p>一分钱杠杆都不加。亏损有上限，右侧那些小概率、高赔率的机会才谈得上。</p>
       </div>
     </div>
   </section>
