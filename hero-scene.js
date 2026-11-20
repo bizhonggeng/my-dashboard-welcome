@@ -55,18 +55,20 @@
         rollX: 0.16                // 俯仰立体倾角
       },
 
-      // 移动端：受 390pt 窄屏限制，归位态需要更饱满才不至于显小
+      // 移动端：尺寸由「自动适配」决定 —— 量测实心几何在屏幕上的实际占比，
+      // 反推出铺满目标宽度所需的 scale，不再依赖 canvas 宽高比的魔数公式。
       mobile: {
-        introScale: 1.04,          // 开场全屏居中时的饱满尺寸
         introPitchZ: 0.05,
-
         dockedOffsetX: 0.0,
-        // 归位态尺寸。实测 0.78 时图形仅占屏宽 69.9%、右侧留白 23.1%，
-        // 视觉上"又小又飘"；抬到 1.02 后约占屏宽 92%，左右留白趋于对称。
-        dockedScale: 1.15,
         dockedPitchZ: 0.13,
         yawY: -0.14,
-        rollX: 0.15
+        rollX: 0.15,
+
+        // 自动适配参数：占画布宽/高的目标比例
+        introFillW: 0.76,      // 开场态：居中大图占屏宽 76%
+        dockedFillW: 0.88,     // 归位态：占屏宽 88%
+        introAllowH: 0.46,     // 开场态允许占画布高 46%（全屏都有空间）
+        slotUseH: 0.92         // 归位态最多用掉顶部槽位高度的 92%，留一点呼吸
       },
 
       // 桌面端整体微视差（克制阻尼，不旋转相机）
@@ -1191,6 +1193,73 @@
   var activeAmbientCount = maxAmbient;
   var activeFollowCount = maxFollow;
 
+  // ==========================================================================
+  //  自动适配：量测实心几何的包围盒，反推铺满目标比例所需的 scale
+  //  "实心几何"只含球/锥/中轴等实体，排除底部网格线（它比实体宽得多，
+  //   拿它量会把主体压小）。归一化后即可跨设备复用同一套目标比例。
+  // ==========================================================================
+  var fitRef = { halfW: 0, halfH: 0, measured: false };
+
+  // 帧率自适应降级的状态（见 animate 循环）
+  var perfProbe = { count: 0, total: 0, step: 0 };
+
+  /**
+   * 量测"视觉占位"包围盒。
+   * 不能只量实心 Mesh —— 粒子和底部网格线向两侧延伸得比球体远得多，
+   * 只量实心会把 scale 算大，导致粒子飞出屏幕边缘。
+   * 折中：Mesh 全额计入，Points/Line 计入其几何体的实际范围。
+   */
+  function measureBodyBounds() {
+    if (fitRef.measured) return fitRef;
+    var savedRot = barbellGroup.rotation.clone();
+    var savedScale = stageRoot.scale.x || 1;
+    barbellGroup.rotation.set(0, 0, 0);
+    stageRoot.scale.setScalar(1);
+    stageRoot.updateMatrixWorld(true);
+
+    var box = new THREE.Box3();
+    var tmp = new THREE.Box3();
+    barbellGroup.traverse(function (node) {
+      if (!node.geometry) return;
+      if (node.isMesh || node.isLine || node.isLineSegments || node.isPoints) {
+        tmp.setFromObject(node);
+        if (!tmp.isEmpty()) box.union(tmp);
+      }
+    });
+
+    if (!box.isEmpty()) {
+      fitRef.halfW = Math.max(0.001, (box.max.x - box.min.x) * 0.5);
+      fitRef.halfH = Math.max(0.001, (box.max.y - box.min.y) * 0.5);
+      fitRef.measured = true;
+    }
+
+    barbellGroup.rotation.copy(savedRot);
+    stageRoot.scale.setScalar(savedScale);
+    stageRoot.updateMatrixWorld(true);
+    return fitRef;
+  }
+
+  /**
+   * 反推 scale：给定「希望图形占据的目标像素框」，算出对应的世界单位缩放。
+   *
+   * 关键：pxPerWorld 必须用**整块画布**的高度来算 —— 透视投影覆盖的是完整
+   * canvas，而不是其中某个槽位。用槽位高度算会把比例放大约 3 倍。
+   * 目标框（targetW/H）才是「图形该多大」的表达。
+   */
+  function solveScaleForFill(targetWpx, targetHpx, canvasWpx, canvasHpx) {
+    var ref = measureBodyBounds();
+    if (!ref.measured || !canvasWpx || !canvasHpx) return null;
+
+    var vFovRad = camera.fov * Math.PI / 180;
+    var worldH = 2 * Math.tan(vFovRad / 2) * Math.abs(camera.position.z);
+    var pxPerWorld = canvasHpx / worldH;
+
+    // 按宽/高分别求所需 scale，取较小者以保证两个方向都不溢出
+    var byW = (targetWpx * 0.5) / (ref.halfW * pxPerWorld);
+    var byH = (targetHpx * 0.5) / (ref.halfH * pxPerWorld);
+    return Math.min(byW, byH);
+  }
+
   function applyLayoutForDockState(dockT) {
     if (!canvasWidth || !canvasHeight) return;
     var aspect = canvasWidth / canvasHeight;
@@ -1225,9 +1294,27 @@
 
       // 保持无论 #hero 总高度如何变化，3D 杠铃像素尺寸始终以 topSlotH 为基准且不发生水平裁切
       var heightNorm = topSlotH / Math.max(1, canvasHeight);
-      var refAspect = canvasWidth / Math.max(1, topSlotH);
-      var aspectScaleM = Math.min(1.08, Math.max(0.80, refAspect / 1.56));
-      var curScaleM = (mCfg.introScale + (mCfg.dockedScale - mCfg.introScale) * smoothDock) * aspectScaleM * heightNorm;
+
+      // —— 自动适配 ——
+      // 目标像素框：归位态 = 屏宽 × dockedFillW，高度受槽位限制；
+      //            开场态 = 屏宽 × introFillW，高度受画布限制。
+      var autoDock = solveScaleForFill(
+        canvasWidth * mCfg.dockedFillW,
+        topSlotH * mCfg.slotUseH,
+        canvasWidth, canvasHeight
+      );
+      var autoIntro = solveScaleForFill(
+        canvasWidth * mCfg.introFillW,
+        canvasHeight * mCfg.introAllowH,
+        canvasWidth, canvasHeight
+      );
+      // 量测失败时回落到旧的比例公式，保证任何情况下都能出图
+      var fallbackDock = 1.15 * Math.min(1.08, Math.max(0.80, (canvasWidth / Math.max(1, topSlotH)) / 1.56)) * heightNorm;
+      var fallbackIntro = 1.04 * Math.min(1.08, Math.max(0.80, (canvasWidth / Math.max(1, topSlotH)) / 1.56)) * heightNorm;
+      var scaleDock = autoDock != null ? autoDock : fallbackDock;
+      var scaleIntro = autoIntro != null ? autoIntro : fallbackIntro;
+
+      var curScaleM = scaleIntro + (scaleDock - scaleIntro) * smoothDock;
       var curPitchM = mCfg.introPitchZ + (mCfg.dockedPitchZ - mCfg.introPitchZ) * smoothDock;
 
       currentBasePitchZ = curPitchM;
@@ -1825,6 +1912,28 @@
       var rawDt = (now - lastTimestamp) * 0.001;
       lastTimestamp = now;
       var dt = Math.max(0.0, Math.min(rawDt, CONFIG.animation.maxDeltaSeconds));
+
+      // —— 帧率自适应降级 ——
+      // DPR 3.0 让填充率翻 4 倍，低端机会掉帧。开场 3 秒后统计平均帧时间，
+      // 若持续低于 30fps，降一档 DPR（3.0 → 2.0 → 1.5），最多降两次。
+      // 只在移动端做，桌面端 DPR 1.75 本来就不高。
+      if (isMobileViewport && perfProbe.count < 999) {
+        perfProbe.count++;
+        perfProbe.total += rawDt;
+        if (perfProbe.count === 180) {   // 约 3 秒（60fps 下）
+          var avgFps = 1 / (perfProbe.total / perfProbe.count);
+          if (avgFps < 30 && perfProbe.step < 2) {
+            perfProbe.step++;
+            var newDpr = perfProbe.step === 1 ? 2.0 : 1.5;
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, newDpr));
+            renderer.setSize(canvasWidth, canvasHeight, false);
+            // 重新适配尺寸（画布像素变了，图形占比不变）
+            applyLayoutForDockState(currentDockProgress);
+          }
+          perfProbe.total = 0;
+          perfProbe.count = 0;
+        }
+      }
 
       elapsedSeconds += dt;
       wallElapsedSeconds = (now - startWallTimestamp) * 0.001;
