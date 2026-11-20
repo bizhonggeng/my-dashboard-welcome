@@ -90,10 +90,6 @@ header{
 .nav{display:flex;align-items:center;justify-content:space-between;height:60px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:680;font-size:15px;letter-spacing:-.01em}
 .brand svg{width:24px;height:24px;flex:none}
-.ver{
-  font-family:var(--mono);font-size:11px;color:var(--left);
-  background:var(--left-soft);padding:1px 7px;border-radius:99px;font-weight:500;
-}
 .nav-links{display:flex;gap:28px;font-size:13.5px;color:var(--text-2);font-weight:500}
 .nav-links a{transition:color .2s;position:relative}
 .nav-links a:hover{color:var(--text)}
@@ -112,7 +108,6 @@ header{
 @media (max-width:520px){
   .nav{gap:8px}
   .brand span{font-size:13.5px;white-space:nowrap}
-  .brand .ver{display:none}
   .theme-btn{width:32px;height:32px}
   .nav-right .btn-primary{padding:7px 12px;font-size:12.5px}
 }
@@ -575,7 +570,6 @@ footer{
         <rect x="17" y="15.3" width="4.2" height="1.4" fill="#6B7C9B"/>
       </svg>
       <span>投资监控 Dashboard</span>
-      <span class="ver" id="ver1"></span>
     </div>
     <nav class="nav-links">
       <a href="#philosophy">设计哲学</a>
@@ -1072,7 +1066,6 @@ footer{
       <span>投资监控 Dashboard</span>
     </div>
     <div class="foot-meta">
-      <span id="ver2"></span>
       <span>© <span id="year"></span></span>
     </div>
   </footer>
@@ -1311,20 +1304,10 @@ footer{
 })();
 
 /* ============================================================
-   4) 版本号与年份
+   4) 年份
    ============================================================ */
 (function(){
   document.getElementById('year').textContent = new Date().getFullYear();
-
-  var els = [document.getElementById('ver1'), document.getElementById('ver2')];
-  fetch('VERSION', { cache: 'no-cache' })
-    .then(function(r){ return r.ok ? r.text() : ''; })
-    .then(function(t){
-      var v = (t || '').trim();
-      if(!v) return;
-      els.forEach(function(e){ if(e) e.textContent = 'v' + v; });
-    })
-    .catch(function(){});
 })();
 </script>
 <script src="three.min.js"></script>
